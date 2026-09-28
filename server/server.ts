@@ -15,7 +15,7 @@ const oauth2Client = new google.auth.OAuth2(
   'http://localhost:3000/auth/google/callback'
 );
 
-// בדיקה אם כבר התחברנו בעבר ויש לנו טוקנים שמורים
+// Check if already authenticated previously and saved tokens exist
 if (fs.existsSync('tokens.json')) {
   const tokenData = fs.readFileSync('tokens.json', 'utf8');
   oauth2Client.setCredentials(JSON.parse(tokenData));
@@ -40,7 +40,7 @@ app.get('/auth/google/callback', async (req, res) => {
     
     oauth2Client.setCredentials(tokens);
     
-    // שמירת הטוקנים בקובץ לUserController
+    // Save tokens to file for persistent authentication
     fs.writeFileSync('tokens.json', JSON.stringify(tokens));
     
     res.send('<h1>Successfully authenticated!</h1><p>You can now scan Drive.</p>');
@@ -50,8 +50,8 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
-// api endpoint for scanning the drive and fetching images/videos
-// 1. נתיב הסריקה המעודכן - מאתר כפילויות ומחזיר רק אותן
+// API endpoint for scanning the Drive and identifying duplicates
+// 1. Scan route - identifies duplicates and returns only duplicate groups
 app.get('/api/drive/scan', async (req, res) => {
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
@@ -61,9 +61,9 @@ app.get('/api/drive/scan', async (req, res) => {
 
     do {
       const requestParams: any = {
-        // הסינון החדש מוסיף את התנאי שאתה חייב להיות הבעלים של הקובץ
-        q: "(mimeType contains 'image/' or mimeType contains 'video/') and 'me' in owners",
-        fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink, imageMediaMetadata)',
+        // Scan all files owned by the user (not restricted only to photos/videos)
+        q: "'me' in owners and trashed = false",
+        fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink)',
         pageSize: 1000,
       };
 
@@ -80,27 +80,26 @@ app.get('/api/drive/scan', async (req, res) => {
       pageToken = response.data.nextPageToken || undefined;
     } while (pageToken);
 
+    // Group all file types by their md5Checksum in a TypeScript-safe way
     const groups: Record<string, any[]> = {};
     allFiles.forEach(file => {
-      const captureTime = file.imageMediaMetadata?.time;
-      const key = captureTime ? `time_${captureTime}` : `md5_${file.md5Checksum}`;
-      
-      if (captureTime || file.md5Checksum) {
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(file);
+      if (file.md5Checksum) {
+        if (!groups[file.md5Checksum]) {
+          groups[file.md5Checksum] = [];
+        }
+        groups[file.md5Checksum]!.push(file);
       }
     });
 
-    const duplicateGroups = Object.entries(groups)
-      .filter(([_, group]) => group.length > 1)
-      .map(([key, group]) => {
+    // Filter and return duplicate groups
+    const duplicateGroups = Object.values(groups)
+      .filter(group => group.length > 1)
+      .map(group => {
+        // Sort the group by file size in descending order
         group.sort((a, b) => parseInt(b.size || '0') - parseInt(a.size || '0'));
-        
-        const isQualityDuplicate = key.startsWith('time_') && 
-                                   group.some(f => f.md5Checksum !== group[0].md5Checksum);
 
         return {
-          type: isQualityDuplicate ? 'quality' : 'exact',
+          type: 'exact',
           files: group
         };
       });
@@ -117,7 +116,7 @@ app.get('/api/drive/scan', async (req, res) => {
   }
 });
 
-// 2. נתיב חדש - מוריד את התמונה מהדרייב ומזרים אותה ישירות ל-React
+// 2. Stream route: fetches the file from Google Drive and streams it directly to the client
 app.get('/api/drive/file/:id', async (req, res) => {
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
@@ -131,7 +130,7 @@ app.get('/api/drive/file/:id', async (req, res) => {
       }
     );
 
-    // מעבירים לדפדפן את הסטטוס (200/206) וההדרים הרלוונטיים
+    // Forward the status code (200/206) and relevant headers to the browser
     res.status(response.status);
     for (const h of ['content-type', 'content-length', 'content-range']) {
       const v = response.headers[h];
@@ -139,7 +138,7 @@ app.get('/api/drive/file/:id', async (req, res) => {
     }
     res.setHeader('Accept-Ranges', 'bytes');
 
-    // אם הדפדפן סגר את החיבור (למשל דילג הלאה), מפסיקים להוריד מגוגל
+    // If the browser closes the connection (e.g. navigated away), stop downloading from Google
     req.on('close', () => response.data.destroy());
 
     response.data

@@ -153,7 +153,9 @@ function App() {
               <div key={index} className="bg-red-50/30 p-6 rounded-2xl border border-red-100 shadow-sm">
                 <h2 className="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
                   <span className="bg-red-200 text-red-900 px-3 py-1 rounded-full text-sm">סט #{index + 1}</span>
-                  {isQuality ? 'אותו קובץ מופיע באיכויות שונות' : `אותו קובץ מופיע ${group.length} פעמים`}
+                  {group.length === 2 
+                    ? 'אותו קובץ מופיע פעמיים' 
+                    : `אותו קובץ מופיע ${group.length} פעמים`}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
