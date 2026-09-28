@@ -52,34 +52,53 @@ app.get('/auth/google/callback', async (req, res) => {
 
 // api endpoint for scanning the drive and fetching images/videos
 // 1. נתיב הסריקה המעודכן - מאתר כפילויות ומחזיר רק אותן
+// 1. Updated scan endpoint - finds duplicates (exact or quality-based)
 app.get('/api/drive/scan', async (req, res) => {
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
     
     const response = await drive.files.list({
       q: "mimeType contains 'image/' or mimeType contains 'video/'",
-      fields: 'files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink)', 
+      // Added imageMediaMetadata to fetch the original capture time
+      fields: 'files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink, imageMediaMetadata)', 
       pageSize: 1000, 
     });
 
     const files = response.data.files || [];
     
-    // קיבוץ הקבצים לפי ה-MD5 שלהם
+    // Group files by capture time first, fallback to md5Checksum
     const groups: Record<string, any[]> = {};
     files.forEach(file => {
-      if (file.md5Checksum) {
-        if (!groups[file.md5Checksum]) groups[file.md5Checksum] = [];
-        groups[file.md5Checksum]!.push(file);
+      const captureTime = file.imageMediaMetadata?.time;
+      const key = captureTime ? `time_${captureTime}` : `md5_${file.md5Checksum}`;
+      
+      if (captureTime || file.md5Checksum) {
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(file);
       }
     });
 
-    // סינון: שומרים רק קבוצות שיש בהן 2 קבצים או יותר (כפילויות)
-    const duplicates = Object.values(groups).filter(group => group.length > 1);
+    // Filter out unique files and format the output
+    const duplicateGroups = Object.entries(groups)
+      .filter(([_, group]) => group.length > 1)
+      .map(([key, group]) => {
+        // Sort the group by file size descending (largest file first)
+        group.sort((a, b) => parseInt(b.size || '0') - parseInt(a.size || '0'));
+        
+        // Determine if it's a quality duplicate by checking if MD5s differ within the same time group
+        const isQualityDuplicate = key.startsWith('time_') && 
+                                   group.some(f => f.md5Checksum !== group[0].md5Checksum);
+
+        return {
+          type: isQualityDuplicate ? 'quality' : 'exact',
+          files: group
+        };
+      });
 
     res.json({
       success: true,
       totalScanned: files.length,
-      duplicateGroups: duplicates
+      duplicateGroups: duplicateGroups
     });
     
   } catch (error) {

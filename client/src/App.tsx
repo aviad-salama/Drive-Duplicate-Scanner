@@ -12,10 +12,21 @@ interface DriveFile {
   thumbnailLink?: string;
 }
 
-// תצוגה מקדימה של קובץ: מנסה מקור אחד, ואם נכשל עובר לבא בתור
-// 1. thumbnailLink של גוגל (כמו בגלריה/דרייב)
-// 2. עבור וידאו: הפריים הראשון של הסרטון עצמו (דרך השרת שלנו)
-// 3. אם הכול נכשל: אייקון ברירת מחדל
+// Interface for the new grouped response from the server
+interface DuplicateGroup {
+  type: 'exact' | 'quality';
+  files: DriveFile[];
+}
+
+// Helper function to format bytes into MB
+const formatBytes = (bytes?: string) => {
+  if (!bytes) return 'N/A';
+  return (parseInt(bytes) / (1024 * 1024)).toFixed(2) + ' MB';
+};
+
+// ==========================================
+// User's custom MediaPreview component (Unchanged)
+// ==========================================
 function MediaPreview({ file, isVideo }: { file: DriveFile; isVideo: boolean }) {
   const sources: { type: 'img' | 'video'; src: string }[] = [];
 
@@ -27,7 +38,6 @@ function MediaPreview({ file, isVideo }: { file: DriveFile; isVideo: boolean }) 
   }
 
   if (isVideo) {
-    // #t=0.5 גורם לדפדפן להציג פריים אמיתי במקום מסך שחור
     sources.push({
       type: 'video',
       src: `${API}/api/drive/file/${file.id}#t=0.5`,
@@ -77,8 +87,11 @@ function MediaPreview({ file, isVideo }: { file: DriveFile; isVideo: boolean }) 
   );
 }
 
+// ==========================================
+// Main App Component
+// ==========================================
 function App() {
-  const [duplicateGroups, setDuplicateGroups] = useState<DriveFile[][]>([]);
+  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scannedCount, setScannedCount] = useState(0);
@@ -132,69 +145,88 @@ function App() {
         )}
 
         <div className="flex flex-col gap-8">
-          {duplicateGroups.map((group, index) => (
-            <div key={index} className="bg-red-50/30 p-6 rounded-2xl border border-red-100 shadow-sm">
-              <h2 className="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
-                <span className="bg-red-200 text-red-900 px-3 py-1 rounded-full text-sm">סט #{index + 1}</span>
-                אותו קובץ מופיע {group.length} פעמים
-              </h2>
+          {duplicateGroups.map((groupObj, index) => {
+            const { type, files: group } = groupObj;
+            const isQuality = type === 'quality';
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {group.map(file => {
-                  const isVideo = file.mimeType?.startsWith('video/');
+            return (
+              <div key={index} className="bg-red-50/30 p-6 rounded-2xl border border-red-100 shadow-sm">
+                <h2 className="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
+                  <span className="bg-red-200 text-red-900 px-3 py-1 rounded-full text-sm">סט #{index + 1}</span>
+                  {isQuality ? 'אותו קובץ מופיע באיכויות שונות' : `אותו קובץ מופיע ${group.length} פעמים`}
+                </h2>
 
-                  return (
-                    <div key={file.id} className="bg-white p-4 rounded-xl shadow border border-gray-200 flex flex-col items-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
+                  {group.map((file, fileIndex) => {
+                    const isVideo = file.mimeType?.startsWith('video/');
+                    const isRecommendedKeep = isQuality && fileIndex === 0;
+                    const isRecommendedDelete = isQuality && fileIndex > 0;
 
-                      <div className="relative w-full aspect-video mb-4 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 flex items-center justify-center">
+                    return (
+                      <div key={file.id} className={`bg-white p-4 rounded-xl shadow relative flex flex-col items-center transition-all ${isRecommendedKeep ? 'border-2 border-green-400 ring-4 ring-green-50' : 'border border-gray-200'}`}>
 
-                        {/* תצוגה מקדימה: תמונה מוקטנת, או פריים מהסרטון, או אייקון */}
-                        <MediaPreview file={file} isVideo={isVideo} />
-
-                        {/* שכבת לחיצה לפתיחה חיצונית בצפייה של גוגל */}
-                        {file.webViewLink && (
-                          <a
-                            href={file.webViewLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/40 transition-all cursor-pointer group"
-                            title="לצפייה בדרייב"
-                          >
-                            <div className="bg-white/90 rounded-full p-4 shadow-lg transform transition-transform group-hover:scale-110 opacity-80 group-hover:opacity-100">
-                              {isVideo ? (
-                                <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                              ) : (
-                                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                              )}
-                            </div>
-                          </a>
+                        {/* Smart recommendation tags based on file size */}
+                        {isRecommendedKeep && (
+                          <div className="absolute -top-3 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
+                            מומלץ להשאיר (איכות מקסימלית)
+                          </div>
                         )}
-                      </div>
+                        {isRecommendedDelete && (
+                          <div className="absolute -top-3 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
+                            מומלץ למחיקה (איכות נמוכה)
+                          </div>
+                        )}
 
-                      {/* פרטי הקובץ */}
-                      <div className="w-full text-right mb-2">
-                        <p className="text-base font-semibold text-gray-800 truncate" title={file.name}>
-                          {file.name}
-                        </p>
-                        <div className="flex gap-2 items-center mt-1">
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono">
-                            {isVideo ? 'וידאו' : 'תמונה'}
-                          </span>
-                          <span className="text-xs text-gray-400 font-mono truncate">
-                            ID: {file.id.substring(0, 10)}...
-                          </span>
+                        <div className="relative w-full aspect-video mb-4 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 flex items-center justify-center">
+
+                          {/* Rendering the user's custom component */}
+                          <MediaPreview file={file} isVideo={isVideo} />
+
+                          {/* Hover overlay for external viewing */}
+                          {file.webViewLink && (
+                            <a
+                              href={file.webViewLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/40 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                              title="לצפייה בדרייב"
+                            >
+                              <div className="bg-white/90 rounded-full p-4 shadow-lg transform transition-transform group-hover:scale-110">
+                                {isVideo ? (
+                                  <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                ) : (
+                                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                )}
+                              </div>
+                            </a>
+                          )}
                         </div>
-                      </div>
 
-                      <button className="mt-auto w-full py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 hover:text-red-700 transition-colors border border-red-100">
-                        מחק קובץ זה
-                      </button>
-                    </div>
-                  );
-                })}
+                        {/* File metadata details */}
+                        <div className="w-full text-right mb-2">
+                          <p className="text-base font-semibold text-gray-800 truncate" title={file.name}>
+                            {file.name}
+                          </p>
+                          <div className="flex gap-2 items-center mt-2 flex-wrap">
+                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-bold border border-gray-200">
+                              {formatBytes(file.size)}
+                            </span>
+                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono">
+                              {isVideo ? 'וידאו' : 'תמונה'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button className="mt-auto w-full py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 hover:text-red-700 transition-colors border border-red-100">
+                          מחק קובץ זה
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
       </div>
