@@ -52,23 +52,36 @@ app.get('/auth/google/callback', async (req, res) => {
 
 // api endpoint for scanning the drive and fetching images/videos
 // 1. נתיב הסריקה המעודכן - מאתר כפילויות ומחזיר רק אותן
-// 1. Updated scan endpoint - finds duplicates (exact or quality-based)
 app.get('/api/drive/scan', async (req, res) => {
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
     
-    const response = await drive.files.list({
-      q: "mimeType contains 'image/' or mimeType contains 'video/'",
-      // Added imageMediaMetadata to fetch the original capture time
-      fields: 'files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink, imageMediaMetadata)', 
-      pageSize: 1000, 
-    });
+    let allFiles: any[] = [];
+    let pageToken: string | undefined = undefined;
 
-    const files = response.data.files || [];
-    
-    // Group files by capture time first, fallback to md5Checksum
+    do {
+      const requestParams: any = {
+        // הסינון החדש מוסיף את התנאי שאתה חייב להיות הבעלים של הקובץ
+        q: "(mimeType contains 'image/' or mimeType contains 'video/') and 'me' in owners",
+        fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink, imageMediaMetadata)',
+        pageSize: 1000,
+      };
+
+      if (pageToken) {
+        requestParams.pageToken = pageToken;
+      }
+
+      const response = await drive.files.list(requestParams);
+
+      if (response.data.files) {
+        allFiles = allFiles.concat(response.data.files);
+      }
+
+      pageToken = response.data.nextPageToken || undefined;
+    } while (pageToken);
+
     const groups: Record<string, any[]> = {};
-    files.forEach(file => {
+    allFiles.forEach(file => {
       const captureTime = file.imageMediaMetadata?.time;
       const key = captureTime ? `time_${captureTime}` : `md5_${file.md5Checksum}`;
       
@@ -78,14 +91,11 @@ app.get('/api/drive/scan', async (req, res) => {
       }
     });
 
-    // Filter out unique files and format the output
     const duplicateGroups = Object.entries(groups)
       .filter(([_, group]) => group.length > 1)
       .map(([key, group]) => {
-        // Sort the group by file size descending (largest file first)
         group.sort((a, b) => parseInt(b.size || '0') - parseInt(a.size || '0'));
         
-        // Determine if it's a quality duplicate by checking if MD5s differ within the same time group
         const isQualityDuplicate = key.startsWith('time_') && 
                                    group.some(f => f.md5Checksum !== group[0].md5Checksum);
 
@@ -97,7 +107,7 @@ app.get('/api/drive/scan', async (req, res) => {
 
     res.json({
       success: true,
-      totalScanned: files.length,
+      totalScanned: allFiles.length,
       duplicateGroups: duplicateGroups
     });
     
