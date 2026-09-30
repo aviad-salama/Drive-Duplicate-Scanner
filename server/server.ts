@@ -53,18 +53,27 @@ app.get('/auth/google/callback', async (req, res) => {
 // API endpoint for scanning the Drive and identifying duplicates
 // 1. Scan route - identifies duplicates and returns only duplicate groups
 app.get('/api/drive/scan', async (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+
   try {
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
     
     let allFiles: any[] = [];
     let pageToken: string | undefined = undefined;
+    let scannedCount = 0;
+    
+    // Moved outside the loop to track duplicates in real-time
+    const groups: Record<string, any[]> = {};
 
     do {
       const requestParams: any = {
-        // Scan all files owned by the user (not restricted only to photos/videos)
         q: "'me' in owners and trashed = false",
         fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink)',
-        pageSize: 1000,
+        pageSize: 250, // Reduced for much more frequent live updates
       };
 
       if (pageToken) {
@@ -73,46 +82,51 @@ app.get('/api/drive/scan', async (req, res) => {
 
       const response = await drive.files.list(requestParams);
 
-      if (response.data.files) {
-        allFiles = allFiles.concat(response.data.files);
+      if (response.data.files && response.data.files.length > 0) {
+        const currentFiles = response.data.files;
+        allFiles = allFiles.concat(currentFiles);
+        scannedCount += currentFiles.length;
+
+        // Process files into groups on the fly
+        currentFiles.forEach(file => {
+          if (file.md5Checksum) {
+            if (!groups[file.md5Checksum]) {
+              groups[file.md5Checksum] = [];
+            }
+            groups[file.md5Checksum]!.push(file);
+          }
+        });
+
+        // Calculate the current number of duplicate sets
+        let currentDuplicates = 0;
+        for (const key in groups) {
+          if (groups[key]!.length > 1) {
+            currentDuplicates++;
+          }
+        }
+
+        // Stream the live progress to the frontend
+        res.write(`data: ${JSON.stringify({ type: 'progress', scannedCount, duplicatesCount: currentDuplicates })}\n\n`);
       }
 
       pageToken = response.data.nextPageToken || undefined;
     } while (pageToken);
 
-    // Group all file types by their md5Checksum in a TypeScript-safe way
-    const groups: Record<string, any[]> = {};
-    allFiles.forEach(file => {
-      if (file.md5Checksum) {
-        if (!groups[file.md5Checksum]) {
-          groups[file.md5Checksum] = [];
-        }
-        groups[file.md5Checksum]!.push(file);
-      }
-    });
-
-    // Filter and return duplicate groups
+    // Final sorting and filtering
     const duplicateGroups = Object.values(groups)
       .filter(group => group.length > 1)
       .map(group => {
-        // Sort the group by file size in descending order
         group.sort((a, b) => parseInt(b.size || '0') - parseInt(a.size || '0'));
-
-        return {
-          type: 'exact',
-          files: group
-        };
+        return { type: 'exact', files: group };
       });
 
-    res.json({
-      success: true,
-      totalScanned: allFiles.length,
-      duplicateGroups: duplicateGroups
-    });
+    res.write(`data: ${JSON.stringify({ type: 'complete', totalScanned: allFiles.length, duplicateGroups })}\n\n`);
+    res.end();
     
   } catch (error) {
     console.error('Error scanning drive:', error);
-    res.status(500).json({ success: false, message: 'Failed to scan drive' });
+    res.write(`data: ${JSON.stringify({ type: 'error', message: 'Failed to scan drive' })}\n\n`);
+    res.end();
   }
 });
 

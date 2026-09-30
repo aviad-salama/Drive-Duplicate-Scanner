@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+@theme {
+  --animate-ping-pong: ping-pong 1.5s ease-in-out infinite;
+}
+
+@keyframes ping-pong {
+  0%, 100% {
+    left: 0;
+    transform: translateX(0);
+  }
+  50% {
+    left: 100%;
+    transform: translateX(-100%);
+  }
+}
