@@ -1,6 +1,6 @@
 import { useState , useEffect } from 'react';
 
-const API = 'http://localhost:3000';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 interface DriveFile {
   id: string;
@@ -12,30 +12,33 @@ interface DriveFile {
   thumbnailLink?: string;
 }
 
-// Interface for the new grouped response from the server
 interface DuplicateGroup {
   type: 'exact' | 'quality';
   files: DriveFile[];
 }
 
-// Helper function to format bytes into MB
 const formatBytes = (bytes?: string) => {
   if (!bytes) return 'N/A';
   return (parseInt(bytes) / (1024 * 1024)).toFixed(2) + ' MB';
 };
 
 // ==========================================
-// User's custom MediaPreview component (Unchanged)
+// User's custom MediaPreview component
 // ==========================================
 function MediaPreview({ file, isVideo }: { file: DriveFile; isVideo: boolean }) {
   const sources: { type: 'img' | 'video'; src: string }[] = [];
 
-  if (file.thumbnailLink) {
-    sources.push({
-      type: 'img',
-      src: file.thumbnailLink.replace(/=s\d+$/, '=s600'),
-    });
-  }
+  // if (file.thumbnailLink) {
+  //   sources.push({
+  //     type: 'img',
+  //     src: file.thumbnailLink.replace(/=s\d+$/, '=s600'),
+  //   });
+  // }
+
+  sources.push({
+    type: 'img',
+    src: `${API}/api/drive/thumbnail/${file.id}`,
+  });
 
   if (isVideo) {
     sources.push({
@@ -73,6 +76,7 @@ function MediaPreview({ file, isVideo }: { file: DriveFile; isVideo: boolean }) 
       alt={file.name}
       className="w-full h-full object-cover"
       referrerPolicy="no-referrer"
+      crossOrigin="use-credentials" // חובה כדי שהעוגיות יישלחו לתמונה המוגנת
       onError={next}
     />
   ) : (
@@ -82,6 +86,7 @@ function MediaPreview({ file, isVideo }: { file: DriveFile; isVideo: boolean }) 
       preload="metadata"
       muted
       playsInline
+      crossOrigin="use-credentials" // חובה כדי שהעוגיות יישלחו לסרטון המוגן
       onError={next}
     />
   );
@@ -94,17 +99,13 @@ function App() {
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [scannedCount, setScannedCount] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [targetScanned, setTargetScanned] = useState(0);
   const [displayScanned, setDisplayScanned] = useState(0);
   const [liveDuplicates, setLiveDuplicates] = useState(0);
 
-
-  // Smooth counter effect: rapidly increments displayScanned until it catches up to targetScanned
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
-    
     if (loading && displayScanned < targetScanned) {
       interval = setInterval(() => {
         setDisplayScanned(prev => {
@@ -115,16 +116,14 @@ function App() {
         });
       }, 30);
     }
-    
     return () => clearInterval(interval);
   }, [displayScanned, targetScanned, loading]);
-
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000); // נעלם אחרי 4 שניות
+    }, 4000); 
   };
 
   const handleScan = () => {
@@ -135,7 +134,10 @@ function App() {
       setLiveDuplicates(0);
       setDuplicateGroups([]);
 
-      const eventSource = new EventSource(`${API}/api/drive/scan`);
+      // הוספת withCredentials מאפשרת שליחת ה-Cookies לשרת
+      const eventSource = new EventSource(`${API}/api/drive/scan`, {
+        withCredentials: true 
+      });
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -159,7 +161,8 @@ function App() {
       };
 
       eventSource.onerror = () => {
-        setError('Network error: Connection lost during scan.');
+        // אם החיבור נכשל מיד, סביר להניח שאין עוגיית התחברות (401 Unauthorized)
+        setError('שגיאת חיבור! אנא ודא שהתחברת למערכת באמצעות כפתור ההתחברות למעלה.');
         setLoading(false);
         eventSource.close();
       };
@@ -175,7 +178,8 @@ function App() {
      )}
       <div className="max-w-7xl mx-auto">
 
-        <header className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        {/* --- הדר (Header) חדש עם כפתור התחברות --- */}
+        <header className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">סורק הכפילויות בדרייב</h1>
             <div className="mt-2">
@@ -202,28 +206,42 @@ function App() {
             </div>
           </div>
 
-          <button
-            onClick={handleScan}
-            disabled={loading}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-blue-700 transition-all font-medium disabled:opacity-50 flex items-center gap-3"
-          >
-            {loading ? (
-              <>
-                {/* Spinner Animation */}
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                סורק את כל הקבצים בכונן...
-              </>
-            ) : (
-              'התחל סריקה'
-            )}
-          </button>
+          <div className="flex items-center gap-4">
+            <a
+              href={`${API}/auth/google`}
+              className="bg-white text-gray-700 border border-gray-300 px-4 py-2.5 rounded-xl shadow-sm hover:bg-gray-50 transition-all font-medium text-sm flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              התחבר עם גוגל
+            </a>
+
+            <button
+              onClick={handleScan}
+              disabled={loading}
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-blue-700 transition-all font-medium disabled:opacity-50 flex items-center gap-3"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  סורק את כל הקבצים...
+                </>
+              ) : (
+                'התחל סריקה'
+              )}
+            </button>
+          </div>
         </header>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100">
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-100 font-medium">
             {error}
           </div>
         )}
@@ -251,7 +269,6 @@ function App() {
                     return (
                       <div key={file.id} className={`bg-white p-4 rounded-xl shadow relative flex flex-col items-center transition-all ${isRecommendedKeep ? 'border-2 border-green-400 ring-4 ring-green-50' : 'border border-gray-200'}`}>
 
-                        {/* Smart recommendation tags based on file size */}
                         {isRecommendedKeep && (
                           <div className="absolute -top-3 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
                             מומלץ להשאיר (איכות מקסימלית)
@@ -264,11 +281,7 @@ function App() {
                         )}
 
                         <div className="relative w-full aspect-video mb-4 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 flex items-center justify-center">
-
-                          {/* Rendering the user's custom component */}
                           <MediaPreview file={file} isVideo={isVideo} />
-
-                          {/* Hover overlay for external viewing */}
                           {file.webViewLink && (
                             <a
                               href={file.webViewLink}
@@ -288,7 +301,6 @@ function App() {
                           )}
                         </div>
 
-                        {/* File metadata details */}
                         <div className="w-full text-right mb-2">
                           <p className="text-base font-semibold text-gray-800 truncate" title={file.name}>
                             {file.name}
@@ -306,22 +318,29 @@ function App() {
                           <button 
                             onClick={async () => {
                               try {
+                                // הוספנו credentials: 'include' כדי לשלוח את העוגיות לשרת במחיקה
                                 const res = await fetch(`${API}/api/drive/file/${file.id}`, {
                                   method: 'DELETE',
+                                  credentials: 'include' 
                                 });
+                                
+                                if (res.status === 401) {
+                                  alert('שגיאת אבטחה: אנא התחבר מחדש לגוגל.');
+                                  return;
+                                }
+
                                 const data = await res.json();
                                 
                                 if (data.success) {
-                                  // Update the state to remove the deleted file from the duplicate groups
-                                  setToastMessage(`הקובץ ${file.name} נמחק בהצלחה`);
+                                  showToast(`הקובץ ${file.name} נמחק בהצלחה`);
                                   setDuplicateGroups(prevGroups => 
                                     prevGroups.map(groupObj => ({
                                       ...groupObj,
                                       files: groupObj.files.filter(f => f.id !== file.id)
-                                    })).filter(groupObj => groupObj.files.length > 1) // מסיר סט כפילויות אם נשאר בו רק קובץ אחד
+                                    })).filter(groupObj => groupObj.files.length > 1) 
                                   );
                                 } else {
-                                  alert('שגיאה במחיקת הקובץ');
+                                  alert('שגיאה במחיקת הקובץ: ' + (data.message || ''));
                                 }
                               } catch (err) {
                                 alert('שגיאת תקשורת מול השרת');
