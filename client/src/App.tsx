@@ -95,6 +95,14 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [scannedCount, setScannedCount] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000); // נעלם אחרי 4 שניות
+  };
 
   const handleScan = async () => {
     setLoading(true);
@@ -119,22 +127,47 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-right" dir="rtl">
+      {toastMessage && (
+      <div className="fixed bottom-6 left-6 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl z-50 transition-all flex items-center gap-2">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+        <span className="font-medium">{toastMessage}</span>
+      </div>
+     )}
       <div className="max-w-7xl mx-auto">
 
         <header className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">סורק הכפילויות בדרייב</h1>
-            <p className="text-gray-500 mt-1">
-              {scannedCount > 0 ? `נסרקו ${scannedCount} קבצים. נמצאו ${duplicateGroups.length} סטים כפולים.` : 'מצא תמונות וסרטונים כפולים שמבזבזים לך מקום'}
-            </p>
+            <div className="mt-2">
+              {loading ? (
+                <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                  <div className="bg-blue-600 h-2.5 rounded-full animate-pulse w-full"></div>
+                </div>
+              ) : (
+                <p className="text-gray-500">
+                  {scannedCount > 0 ? `נסרקו ${scannedCount} קבצים. נמצאו ${duplicateGroups.length} סטים כפולים.` : 'מצא תמונות וסרטונים כפולים שמבזבזים לך מקום'}
+                </p>
+              )}
+            </div>
           </div>
 
           <button
             onClick={handleScan}
             disabled={loading}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-blue-700 transition-all font-medium disabled:opacity-50 flex items-center gap-2"
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-blue-700 transition-all font-medium disabled:opacity-50 flex items-center gap-3"
           >
-            {loading ? 'סורק ומאתר כפילויות...' : 'התחל סריקה'}
+            {loading ? (
+              <>
+                {/* Spinner Animation */}
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                סורק את כל הקבצים בכונן...
+              </>
+            ) : (
+              'התחל סריקה'
+            )}
           </button>
         </header>
 
@@ -219,9 +252,34 @@ function App() {
                           </div>
                         </div>
 
-                        <button className="mt-auto w-full py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 hover:text-red-700 transition-colors border border-red-100">
-                          מחק קובץ זה
-                        </button>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`${API}/api/drive/file/${file.id}`, {
+                                  method: 'DELETE',
+                                });
+                                const data = await res.json();
+                                
+                                if (data.success) {
+                                  // Update the state to remove the deleted file from the duplicate groups
+                                  setToastMessage(`הקובץ ${file.name} נמחק בהצלחה`);
+                                  setDuplicateGroups(prevGroups => 
+                                    prevGroups.map(groupObj => ({
+                                      ...groupObj,
+                                      files: groupObj.files.filter(f => f.id !== file.id)
+                                    })).filter(groupObj => groupObj.files.length > 1) // מסיר סט כפילויות אם נשאר בו רק קובץ אחד
+                                  );
+                                } else {
+                                  alert('שגיאה במחיקת הקובץ');
+                                }
+                              } catch (err) {
+                                alert('שגיאת תקשורת מול השרת');
+                              }
+                            }}
+                            className="mt-auto w-full py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 hover:text-red-700 transition-colors border border-red-100"
+                          >
+                            מחק קובץ זה
+                          </button>
                       </div>
                     );
                   })}

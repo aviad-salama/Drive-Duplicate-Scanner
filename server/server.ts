@@ -27,7 +27,7 @@ app.get('/auth/google', (req, res) => {
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
-    scope: ['https://www.googleapis.com/auth/drive.readonly'],
+    scope: ['https://www.googleapis.com/auth/drive'],
   });
   res.redirect(url);
 });
@@ -113,6 +113,24 @@ app.get('/api/drive/scan', async (req, res) => {
   } catch (error) {
     console.error('Error scanning drive:', error);
     res.status(500).json({ success: false, message: 'Failed to scan drive' });
+  }
+});
+
+// API endpoint to delete a file by its ID from Google Drive
+app.delete('/api/drive/file/:id', async (req, res) => {
+  try {
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    const fileId = req.params.id;
+
+    // Call Google Drive API to delete the file
+    await drive.files.delete({
+      fileId: fileId,
+    });
+
+    res.json({ success: true, message: `File ${fileId} deleted successfully` });
+  } catch (error: any) {
+    console.error('Failed to delete file:', error?.message);
+    res.status(500).json({ success: false, message: 'Failed to delete file' });
   }
 });
 
