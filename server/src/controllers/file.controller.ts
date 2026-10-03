@@ -1,0 +1,43 @@
+import type { Request, Response } from 'express';
+
+export async function deleteFileHandler(req: Request, res: Response) {
+  const { provider, refreshToken } = req.cloud!;
+  await provider.deleteFile(refreshToken, String(req.params['fileId']));
+  res.json({ success: true });
+}
+
+export async function streamFileHandler(req: Request, res: Response) {
+  const { provider, refreshToken } = req.cloud!;
+  const { status, headers, stream } = await provider.streamFile(
+    refreshToken,
+    String(req.params['fileId']),
+    req.headers.range,
+  );
+
+  res.status(status);
+  for (const name of ['content-type', 'content-length', 'content-range']) {
+    const value = headers[name];
+    if (value) res.setHeader(name, value);
+  }
+  res.setHeader('Accept-Ranges', 'bytes');
+
+  req.on('close', () => stream.destroy());
+  stream
+    .on('error', () => {
+      if (!res.headersSent) res.status(500).end();
+      else res.end();
+    })
+    .pipe(res);
+}
+
+export async function thumbnailHandler(req: Request, res: Response) {
+  const { provider, refreshToken } = req.cloud!;
+  const thumb = await provider.getThumbnail(refreshToken, String(req.params['fileId']));
+  if (!thumb) {
+    res.status(404).send('Thumbnail not available');
+    return;
+  }
+  res.setHeader('Content-Type', thumb.contentType);
+  res.setHeader('Cache-Control', 'private, max-age=3600');
+  res.send(thumb.buffer);
+}
