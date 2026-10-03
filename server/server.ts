@@ -1,3 +1,4 @@
+import prisma from './config/prisma.js';
 import express from 'express';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
@@ -275,6 +276,14 @@ app.get('/api/drive/thumbnail/:id', requireDriveAuth, async (req: any, res: any)
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+  
+  try {
+    const result = await prisma.$queryRaw`SELECT NOW()`;
+    console.log('✅ Connected successfully to PostgreSQL on Neon via Prisma!');
+    console.log('Database Time:', result);
+  } catch (error) {
+    console.error('❌ Failed to connect to PostgreSQL:', error);
+  }
 });
