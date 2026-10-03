@@ -9,23 +9,23 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-// חובה לאפשר credentials כדי שהדפדפן יסכים לשלוח את ה-Cookies
+// Enable credentials for Cookies
 app.use(cors({
-  origin: 'http://localhost:5173', // שים לב שזה הפורט של ה-React שלך
+  origin: 'http://localhost:5173',
   credentials: true
 }));
 
-// הפעלת קריאת עוגיות
+// Enable cookie parser
 app.use(cookieParser());
 
-// פונקציה שמייצרת מופע חדש של OAuth לכל משתמש/בקשה (ללא שמירת טוקנים גלובלית!)
+// Create a new OAuth2 client per request
 const getOauth2Client = () => new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   process.env.REDIRECT_URI || 'http://localhost:3000/auth/google/callback'
 );
 
-// ניתוב להתחלת ההתחברות
+// Login route
 app.get('/auth/google', (req, res) => {
   const oauth2Client = getOauth2Client();
   const url = oauth2Client.generateAuthUrl({
@@ -36,22 +36,22 @@ app.get('/auth/google', (req, res) => {
   res.redirect(url);
 });
 
-// ניתוב החזרה מגוגל
+// Google callback route
 app.get('/auth/google/callback', async (req, res) => {
   try {
     const { code } = req.query;
     const oauth2Client = getOauth2Client();
     const { tokens } = await oauth2Client.getToken(code as string);
     
-    // במקום לשמור לקובץ tokens.json, אנחנו שומרים את הטוקנים בעוגייה (Cookie) אצל המשתמש!
+    // Store tokens in a secure cookie
     res.cookie('drive_tokens', JSON.stringify(tokens), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // חובה להיות true כש-sameSite הוא none
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // קריטי לדומיינים שונים
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
     
-    // מפנים את המשתמש חזרה לאפליקציית הריאקט
+    // Redirect back to client
     res.redirect(process.env.CLIENT_URL || 'http://localhost:5173');
   } catch (error) {
     console.error('Error retrieving access token:', error);
@@ -59,7 +59,7 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
-// Middleware - שומר הסף שמוודא שהמשתמש מחובר
+// Auth middleware
 const requireDriveAuth = (req: any, res: any, next: any) => {
   const tokensCookie = req.cookies.drive_tokens;
   
@@ -72,7 +72,7 @@ const requireDriveAuth = (req: any, res: any, next: any) => {
     const oauth2Client = getOauth2Client();
     oauth2Client.setCredentials(tokens);
     
-    // מצמידים את האובייקט המאומת לבקשה כדי שהראוטרים הבאים יוכלו להשתמש בו
+    // Attach the oauth2Client to the request object for later use in routes
     req.driveClient = oauth2Client;
     next();
   } catch (error) {
@@ -81,7 +81,7 @@ const requireDriveAuth = (req: any, res: any, next: any) => {
 };
 
 
-// 1. Scan route - מוגן כעת על ידי ה-Middleware
+// 1. Scan route for finding duplicates
 app.get('/api/drive/scan', requireDriveAuth, async (req: any, res: any) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -90,34 +90,63 @@ app.get('/api/drive/scan', requireDriveAuth, async (req: any, res: any) => {
   });
 
   try {
-    // משתמשים באובייקט הייחודי של המשתמש שהגיע מה-Middleware!
+    // Get the authenticated Google Drive client
     const drive = google.drive({ version: 'v3', auth: req.driveClient });
     
-    let allFiles: any[] = [];
     let pageToken: string | undefined = undefined;
     let scannedCount = 0;
     const groups: Record<string, any[]> = {};
 
     do {
       const requestParams: any = {
-        q: "'me' in owners and trashed = false",
+        q: "'me' in owners and trashed = false and mimeType != 'application/vnd.google-apps.folder' and not mimeType contains 'application/vnd.google-apps'",
         fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink)',
         pageSize: 250,
       };
 
       if (pageToken) requestParams.pageToken = pageToken;
 
-      const response = await drive.files.list(requestParams);
+      // Implement retry logic for rate limiting and server errors, to prevent the server from crashing
+      let response;
+      let retries = 0;
+      const maxRetries = 3;
+
+      while (retries <= maxRetries) {
+        try {
+          response = await drive.files.list(requestParams);
+          break; 
+        } catch (err: any) {
+          if ((err.code === 429 || err.code >= 500) && retries < maxRetries) {
+            retries++;
+            const delay = Math.pow(2, retries) * 1000 + Math.floor(Math.random() * 1000);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      if (!response) {
+        throw new Error('Failed to fetch from Google Drive after maximum retries.');
+      }
 
       if (response.data.files && response.data.files.length > 0) {
         const currentFiles = response.data.files;
-        allFiles = allFiles.concat(currentFiles);
         scannedCount += currentFiles.length;
 
         currentFiles.forEach(file => {
           if (file.md5Checksum) {
             if (!groups[file.md5Checksum]) groups[file.md5Checksum] = [];
-            groups[file.md5Checksum]!.push(file);
+            
+            // Store lightweight object to prevent memory leaks
+            groups[file.md5Checksum]!.push({
+              id: file.id,
+              name: file.name,
+              mimeType: file.mimeType,
+              size: file.size,
+              webViewLink: file.webViewLink,
+              thumbnailLink: file.thumbnailLink
+            });
           }
         });
 
@@ -139,7 +168,7 @@ app.get('/api/drive/scan', requireDriveAuth, async (req: any, res: any) => {
         return { type: 'exact', files: group };
       });
 
-    res.write(`data: ${JSON.stringify({ type: 'complete', totalScanned: allFiles.length, duplicateGroups })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'complete', totalScanned: scannedCount, duplicateGroups })}\n\n`);
     res.end();
     
   } catch (error) {
@@ -149,7 +178,7 @@ app.get('/api/drive/scan', requireDriveAuth, async (req: any, res: any) => {
   }
 });
 
-// API endpoint to delete a file - מוגן
+// API endpoint to delete a file
 app.delete('/api/drive/file/:id', requireDriveAuth, async (req: any, res: any) => {
   try {
     const drive = google.drive({ version: 'v3', auth: req.driveClient });
@@ -161,7 +190,7 @@ app.delete('/api/drive/file/:id', requireDriveAuth, async (req: any, res: any) =
   }
 });
 
-// 2. Stream route - מוגן
+// 2. Stream route
 app.get('/api/drive/file/:id', requireDriveAuth, async (req: any, res: any) => {
   try {
     const drive = google.drive({ version: 'v3', auth: req.driveClient });
@@ -192,7 +221,7 @@ app.get('/api/drive/file/:id', requireDriveAuth, async (req: any, res: any) => {
   }
 });
 
-// Preview / thumbnail של כל סוגי הקבצים
+// Thumbnail proxy route
 app.get('/api/drive/thumbnail/:id', requireDriveAuth, async (req: any, res: any) => {
   try {
     const drive = google.drive({
@@ -200,7 +229,7 @@ app.get('/api/drive/thumbnail/:id', requireDriveAuth, async (req: any, res: any)
       auth: req.driveClient
     });
 
-    // מקבלים את ה-thumbnailLink של הקובץ
+    // Get the thumbnailLink
     const metadata = await drive.files.get({
       fileId: req.params.id,
       fields: 'thumbnailLink,mimeType'
@@ -212,14 +241,14 @@ app.get('/api/drive/thumbnail/:id', requireDriveAuth, async (req: any, res: any)
       return res.status(404).send('Thumbnail not available');
     }
 
-    // מקבלים access token תקף
+    // Get valid access token
     const accessToken = await req.driveClient.getAccessToken();
 
     if (!accessToken.token) {
       return res.status(401).send('Unable to authenticate with Google Drive');
     }
 
-    // מורידים את ה-thumbnail דרך Google עם Authorization
+    // Fetch thumbnail with Authorization header
     const thumbnailResponse = await fetch(thumbnailLink, {
       headers: {
         Authorization: `Bearer ${accessToken.token}`

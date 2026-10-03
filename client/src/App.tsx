@@ -168,6 +168,48 @@ function App() {
       };
     };
 
+    // Handle bulk deletion of duplicate files
+    const handleBulkDelete = async () => {
+      const filesToDelete = duplicateGroups.flatMap(groupObj => groupObj.files.slice(1));
+      
+      if (filesToDelete.length === 0) return;
+      
+      const confirmMessage = `Are you sure you want to delete ${filesToDelete.length} duplicate files? This action cannot be undone.`;
+      if (!window.confirm(confirmMessage)) return;
+
+      setLoading(true);
+      let successCount = 0;
+      let failedCount = 0;
+
+      for (const file of filesToDelete) {
+        try {
+          const res = await fetch(`${API}/api/drive/file/${file.id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+          
+          if (res.ok) {
+            successCount++;
+            setDuplicateGroups(prevGroups => 
+              prevGroups.map(groupObj => ({
+                ...groupObj,
+                files: groupObj.files.filter(f => f.id !== file.id)
+              })).filter(groupObj => groupObj.files.length > 1) 
+            );
+          } else {
+            failedCount++;
+          }
+        } catch (err) {
+          failedCount++;
+        }
+      }
+      
+      setLoading(false);
+      showToast(`Deleted ${successCount} files successfully.${failedCount > 0 ? ` Failed to delete ${failedCount} files.` : ''}`);
+    };
+
+  const duplicateFilesCount = duplicateGroups.reduce((acc, group) => acc + (group.files.length - 1), 0);
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-right" dir="rtl">
       {toastMessage && (
@@ -247,6 +289,27 @@ function App() {
         )}
 
         <div className="flex flex-col gap-8">
+          {/*  Conditional rendering for bulk delete button */}
+          {duplicateGroups.length > 0 && duplicateFilesCount > 0 && (
+            <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-wrap gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">פעולות מהירות</h3>
+                <p className="text-sm text-gray-500">נמצאו {duplicateFilesCount} קבצים כפולים שניתן למחוק בבת אחת.</p>
+              </div>
+              <button
+                onClick={handleBulkDelete}
+                disabled={loading}
+                className="bg-red-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-red-700 transition-all font-medium disabled:opacity-50 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                מחק הכל ({duplicateFilesCount} קבצים)
+              </button>
+            </div>
+          )}
+
+          {/* Render duplicate groups */}
           {duplicateGroups.map((groupObj, index) => {
             const { type, files: group } = groupObj;
             const isQuality = type === 'quality';
