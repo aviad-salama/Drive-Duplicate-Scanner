@@ -157,7 +157,7 @@ export default function DashboardPage() {
           )}
           {scan.groups.map((group, i) => (
             <DuplicateGroupCard
-              key={group.files[0]?.id ?? i}
+              key={`${group.files[0]?.accountId ?? ''}:${group.files[0]?.id ?? i}`}
               group={group}
               index={i}
               accountId={activeId ?? ''}

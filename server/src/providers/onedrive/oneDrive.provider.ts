@@ -6,6 +6,7 @@ import type { CloudFile, CloudProvider, ConnectedAccountInfo } from '../types.js
 
 const SCOPES = ['offline_access', 'Files.ReadWrite', 'User.Read'];
 
+
 interface MicrosoftTokenResponse {
   access_token: string;
   refresh_token?: string;
@@ -53,15 +54,27 @@ async function getAccessToken(refreshToken: string): Promise<string> {
   return data.access_token;
 }
 
-const toCloudFile = (item: GraphDriveItem): CloudFile => ({
-  id: item.id,
-  name: item.name,
-  mimeType: item.file?.mimeType ?? 'application/octet-stream',
-  size: item.size !== undefined ? String(item.size) : null,
-  checksum: item.file?.hashes?.quickXorHash ?? item.file?.hashes?.sha1Hash ?? null,
-  webViewLink: item.webUrl ?? null,
-  thumbnailLink: item.thumbnails?.[0]?.large?.url ?? item.thumbnails?.[0]?.medium?.url ?? null,
-});
+const toCloudFile = (item: GraphDriveItem): CloudFile => {
+  const nativeHashes: Record<string, string> = {};
+
+  if (item.file?.hashes?.quickXorHash) {
+    nativeHashes.quickxor = item.file.hashes.quickXorHash;
+  }
+
+  if (item.file?.hashes?.sha1Hash) {
+    nativeHashes.sha1 = item.file.hashes.sha1Hash;
+  }
+
+  return {
+    id: item.id,
+    name: item.name,
+    mimeType: item.file?.mimeType ?? 'application/octet-stream',
+    size: item.size !== undefined ? String(item.size) : null,
+    nativeHashes,
+    webViewLink: item.webUrl ?? null,
+    thumbnailLink: item.thumbnails?.[0]?.large?.url ?? item.thumbnails?.[0]?.medium?.url ?? null,
+  };
+};
 
 export const oneDriveProvider: CloudProvider = {
   id: 'onedrive',

@@ -23,7 +23,7 @@ export default function DuplicateGroupCard({ group, index, accountId, onDelete }
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
         {group.files.map((file, i) => (
           <FileCard
-            key={file.id}
+            key={`${file.accountId ?? ''}:${file.id}`}
             file={file}
             accountId={accountId}
             isRecommendedKeep={isQuality && i === 0}

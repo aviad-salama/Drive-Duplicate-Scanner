@@ -22,7 +22,7 @@ const toCloudFile = (f: drive_v3.Schema$File): CloudFile => ({
   name: f.name ?? '',
   mimeType: f.mimeType ?? '',
   size: f.size ?? null,
-  checksum: f.md5Checksum ?? null,
+  nativeHashes: f.md5Checksum? { md5: f.md5Checksum }: {},
   webViewLink: f.webViewLink ?? null,
   thumbnailLink: f.thumbnailLink ?? null,
 });

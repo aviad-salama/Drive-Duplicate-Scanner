@@ -3,7 +3,7 @@ export interface CloudFile {
   name: string;
   mimeType: string;
   size: string | null;
-  checksum: string | null;
+  nativeHashes: Record<string, string>;
   webViewLink: string | null;
   thumbnailLink: string | null;
   accountId?: string;

@@ -1,11 +1,11 @@
 import { prisma } from '../config/prisma.js';
 import { getProvider } from '../providers/registry.js';
+import type { CloudFile } from '../providers/types.js';
 import { decrypt } from '../utils/crypto.js';
+import { calculateSha256 } from './fingerprint.service.js';
 import {
-  addToGroups,
-  countDuplicateGroups,
-  toDuplicateGroups,
-  type ChecksumGroups,
+  countNativeDuplicateGroups,
+  findDuplicateGroups,
 } from './duplicate.service.js';
 import { ScanCancelledError, type ScanControl } from './scanControl.service.js';
 
@@ -37,14 +37,12 @@ export const finishScan = (
     data: { status, totalScanned, duplicateGroups, finishedAt: new Date() },
   });
 
-// Used for both a single account and all accounts, so every file always
-// carries its account context (needed for the cloud badge and thumbnails).
 export async function runMultiAccountScan(
   accounts: AccountScanTarget[],
   onProgress: (progress: ScanProgress) => void,
   control: ScanControl,
 ) {
-  const groups: ChecksumGroups = new Map();
+  const allFiles: CloudFile[] = [];
   let scannedCount = 0;
   let cancelled = false;
 
@@ -54,21 +52,21 @@ export async function runMultiAccountScan(
       const refreshToken = decrypt(acc.refreshTokenEnc);
 
       for await (const page of provider.listFiles(refreshToken)) {
-        // Blocks while paused and throws if the scan was cancelled.
         await control.checkpoint();
 
-        const decorated = page.map((f) => ({
-          ...f,
+        const decorated = page.map((file) => ({
+          ...file,
           accountId: acc.id,
           accountEmail: acc.accountEmail,
           provider: acc.provider,
         }));
 
+        allFiles.push(...decorated);
         scannedCount += decorated.length;
-        addToGroups(groups, decorated);
+
         onProgress({
           scannedCount,
-          duplicatesCount: countDuplicateGroups(groups),
+          duplicatesCount: 0,
           currentProvider: acc.provider,
           currentAccount: acc.accountEmail,
         });
@@ -76,8 +74,69 @@ export async function runMultiAccountScan(
     }
   } catch (error) {
     if (!(error instanceof ScanCancelledError)) throw error;
-    cancelled = true; // Return the partial results found so far.
+    cancelled = true;
   }
 
-  return { totalScanned: scannedCount, duplicateGroups: toDuplicateGroups(groups), cancelled };
+  if (cancelled) {
+    const nativeDuplicateCount = countNativeDuplicateGroups(allFiles);
+
+    return {
+      totalScanned: scannedCount,
+      duplicateGroups: [],
+      cancelled: true,
+      nativeDuplicateGroups: nativeDuplicateCount,
+    };
+  }
+
+  const accountsById = new Map(accounts.map((account) => [account.id, account]));
+  const sha256Cache = new Map<string, string>();
+
+  const calculateFileSha256 = async (file: CloudFile): Promise<string> => {
+    const cacheKey = `${file.accountId ?? ''}:${file.id}`;
+    const cached = sha256Cache.get(cacheKey);
+
+    if (cached) return cached;
+
+    if (!file.accountId) {
+      throw new Error(`Missing account ID for file ${file.id}`);
+    }
+
+    const account = accountsById.get(file.accountId);
+
+    if (!account) {
+      throw new Error(`Cloud account not found for file ${file.id}`);
+    }
+
+    await control.checkpoint();
+
+    const provider = getProvider(account.provider);
+    const refreshToken = decrypt(account.refreshTokenEnc);
+    const { stream } = await provider.streamFile(refreshToken, file.id);
+
+    const sha256 = await calculateSha256(stream);
+
+    await control.checkpoint();
+
+    sha256Cache.set(cacheKey, sha256);
+
+    return sha256;
+  };
+
+  const duplicateGroups = await findDuplicateGroups(
+    allFiles,
+    calculateFileSha256,
+  );
+
+  onProgress({
+    scannedCount,
+    duplicatesCount: duplicateGroups.length,
+    currentProvider: '',
+    currentAccount: '',
+  });
+
+  return {
+    totalScanned: scannedCount,
+    duplicateGroups,
+    cancelled: false,
+  };
 }

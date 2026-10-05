@@ -133,19 +133,28 @@ export function useScan() {
     if (!(await sendControl('cancel'))) reset();
   };
 
-  const removeFromGroups = (fileId: string) =>
-    setGroups((prev) =>
-      prev
-        .map((g) => ({ ...g, files: g.files.filter((f) => f.id !== fileId) }))
-        .filter((g) => g.files.length > 1),
-    );
+  const getFileKey = (file: CloudFile) =>
+  `${file.accountId ?? ''}:${file.id}`;
+
+const removeFromGroups = (file: CloudFile) => {
+  const targetKey = getFileKey(file);
+
+  setGroups((prev) =>
+    prev
+      .map((group) => ({
+        ...group,
+        files: group.files.filter((current) => getFileKey(current) !== targetKey),
+      }))
+      .filter((group) => group.files.length > 1),
+  );
+};
 
   const deleteFile = async (file: CloudFile) => {
     // Every scanned file carries its own accountId.
     if (!file.accountId) return false;
     try {
       await deleteFileApi(file.accountId, file.id);
-      removeFromGroups(file.id);
+      removeFromGroups(file);
       return true;
     } catch {
       return false;

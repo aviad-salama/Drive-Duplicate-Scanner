@@ -5,7 +5,7 @@ export interface CloudFile {
   name: string;
   mimeType: string;
   size: string | null;
-  checksum: string | null; // Hash returned by the cloud provider; compare only within the same provider.
+  nativeHashes: Record<string, string>; 
   webViewLink: string | null;
   thumbnailLink: string | null;
   accountId?: string;
