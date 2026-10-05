@@ -16,6 +16,9 @@ export const env = {
   GOOGLE_CLIENT_ID: required('GOOGLE_CLIENT_ID'),
   GOOGLE_CLIENT_SECRET: required('GOOGLE_CLIENT_SECRET'),
   GOOGLE_REDIRECT_URI: required('GOOGLE_REDIRECT_URI'),
+  ONEDRIVE_CLIENT_ID: required('ONEDRIVE_CLIENT_ID'),
+  ONEDRIVE_CLIENT_SECRET: required('ONEDRIVE_CLIENT_SECRET'),
+  ONEDRIVE_REDIRECT_URI: required('ONEDRIVE_REDIRECT_URI'),
 };
 
 export const isProd = env.NODE_ENV === 'production';
