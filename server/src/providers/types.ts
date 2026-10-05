@@ -8,6 +8,9 @@ export interface CloudFile {
   checksum: string | null; // Hash returned by the cloud provider; compare only within the same provider.
   webViewLink: string | null;
   thumbnailLink: string | null;
+  accountId?: string;
+  accountEmail?: string;
+  provider?: string;
 }
 
 export interface ConnectedAccountInfo {

@@ -6,6 +6,9 @@ export interface CloudFile {
   checksum: string | null;
   webViewLink: string | null;
   thumbnailLink: string | null;
+  accountId?: string;
+  accountEmail?: string;
+  provider?: string;
 }
 
 export interface DuplicateGroup {

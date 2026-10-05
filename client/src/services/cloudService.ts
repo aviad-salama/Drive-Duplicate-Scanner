@@ -20,3 +20,10 @@ export const streamUrl = (accountId: string, fileId: string) =>
 
 export const deleteFile = (accountId: string, fileId: string) =>
   api<{ success: boolean }>(`/accounts/${accountId}/files/${fileId}`, { method: 'DELETE' });
+
+export const scanAllUrl = () => `${API_URL}/api/cloud/scan-all`;
+
+export type ScanAction = 'pause' | 'resume' | 'cancel';
+
+export const controlScan = (scanId: string, action: ScanAction) =>
+  api<{ success: boolean }>(`/cloud/scans/${scanId}/${action}`, { method: 'POST' });

@@ -1,6 +1,7 @@
 import type { CloudFile } from '../types/cloud';
 import { formatBytes } from '../utils/format';
 import MediaPreview from './MediaPreview';
+import CloudBadge from './CloudBadge';
 
 interface Props {
   file: CloudFile;
@@ -37,7 +38,7 @@ export default function FileCard({
       )}
 
       <div className="relative w-full aspect-video mb-4 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 flex items-center justify-center">
-        <MediaPreview file={file} isVideo={isVideo} accountId={accountId} />
+        <MediaPreview file={file} isVideo={isVideo} accountId={file.accountId ?? accountId} />
         {file.webViewLink && (
           <a
             href={file.webViewLink}
@@ -59,6 +60,9 @@ export default function FileCard({
             </div>
           </a>
         )}
+        <div className="absolute top-2 right-2 z-10 pointer-events-none">
+          <CloudBadge provider={file.provider} email={file.accountEmail} />
+        </div>
       </div>
 
       <div className="w-full text-right mb-2">

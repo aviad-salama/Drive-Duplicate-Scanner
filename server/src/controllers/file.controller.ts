@@ -32,12 +32,19 @@ export async function streamFileHandler(req: Request, res: Response) {
 
 export async function thumbnailHandler(req: Request, res: Response) {
   const { provider, refreshToken } = req.cloud!;
-  const thumb = await provider.getThumbnail(refreshToken, String(req.params['fileId']));
-  if (!thumb) {
-    res.status(404).send('Thumbnail not available');
-    return;
+  try {
+    const thumb = await provider.getThumbnail(refreshToken, String(req.params['fileId']));
+    if (thumb) {
+      res.setHeader('Content-Type', thumb.contentType);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.send(thumb.buffer);
+      return;
+    }
+  } catch (error) {
+    console.warn('Thumbnail fetch failed:', error);
   }
-  res.setHeader('Content-Type', thumb.contentType);
-  res.setHeader('Cache-Control', 'private, max-age=3600');
-  res.send(thumb.buffer);
+  // 204 instead of 404: the browser logs no console error for it,
+  // and the <img> onError handler on the client shows a placeholder.
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.status(204).end();
 }

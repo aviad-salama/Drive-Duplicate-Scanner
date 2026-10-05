@@ -1,6 +1,7 @@
 import type { CloudFile, DuplicateGroup } from '../types/cloud';
 import FileCard from './FileCard';
 
+
 interface Props {
   group: DuplicateGroup;
   index: number;

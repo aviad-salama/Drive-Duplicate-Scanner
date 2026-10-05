@@ -1,27 +1,99 @@
 import type { Request, Response } from 'express';
-import { createScan, finishScan, runScan } from '../services/scan.service.js';
+import { prisma } from '../config/prisma.js';
+import { getCloudAccountForUser } from '../services/cloudAccount.service.js';
+import { createScan, finishScan, runMultiAccountScan } from '../services/scan.service.js';
+import { getScanControl, registerScan, unregisterScan } from '../services/scanControl.service.js';
 
-// SSE: Send progress updates in real time.
-export async function scanHandler(req: Request, res: Response) {
-  const { provider, refreshToken, accountId } = req.cloud!;
-
+// Opens an SSE stream and returns a helper that sends one event.
+function openEventStream(res: Response) {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     Connection: 'keep-alive',
   });
-  const send = (data: unknown) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+  return (data: unknown) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
 
-  const scan = await createScan(req.user!.id, accountId);
+// SSE: scan a single account.
+export async function scanHandler(req: Request, res: Response) {
+  const userId = req.user!.id;
+  const account = await getCloudAccountForUser(req.cloud!.accountId, userId);
+  if (!account) {
+    res.status(404).json({ error: 'Cloud account not found.' });
+    return;
+  }
+
+  const send = openEventStream(res);
+  const control = registerScan(userId);
+  // Stop the work if the browser disconnects (closed tab, reset, etc.).
+  res.on('close', () => control.cancel());
+  send({ type: 'started', scanId: control.id });
+
+  const scan = await createScan(userId, account.id);
   try {
-    const result = await runScan(provider, refreshToken, (p) => send({ type: 'progress', ...p }));
+    const result = await runMultiAccountScan(
+      [account],
+      (p) => send({ type: 'progress', ...p }),
+      control,
+    );
+    // A cancelled scan is stored as COMPLETED with its partial counts.
     await finishScan(scan.id, 'COMPLETED', result.totalScanned, result.duplicateGroups.length);
-    send({ type: 'complete', ...result });
+    send({ type: result.cancelled ? 'cancelled' : 'complete', ...result });
   } catch (error) {
     console.error('Scan failed:', error);
     await finishScan(scan.id, 'FAILED');
     send({ type: 'error', message: 'Failed to scan drive' });
   } finally {
+    unregisterScan(control.id);
     res.end();
   }
+}
+
+// SSE: scan every connected account of the user.
+export async function scanAllHandler(req: Request, res: Response) {
+  const userId = req.user!.id;
+  const send = openEventStream(res);
+  const control = registerScan(userId);
+  res.on('close', () => control.cancel());
+  send({ type: 'started', scanId: control.id });
+
+  try {
+    const accounts = await prisma.cloudAccount.findMany({ where: { userId } });
+    if (accounts.length === 0) {
+      send({ type: 'error', message: 'No connected accounts found' });
+      return;
+    }
+
+    const result = await runMultiAccountScan(
+      accounts,
+      (p) => send({ type: 'progress', ...p }),
+      control,
+    );
+    send({ type: result.cancelled ? 'cancelled' : 'complete', ...result });
+  } catch (error) {
+    console.error('Scan all failed:', error);
+    send({ type: 'error', message: 'Failed to scan all drives' });
+  } finally {
+    unregisterScan(control.id);
+    res.end();
+  }
+}
+
+// POST /api/cloud/scans/:scanId/:action  (pause | resume | cancel)
+export function controlScanHandler(req: Request, res: Response) {
+  const control = getScanControl(String(req.params['scanId']), req.user!.id);
+  if (!control) {
+    res.status(404).json({ error: 'Scan not found or already finished.' });
+    return;
+  }
+
+  const action = String(req.params['action']);
+  if (action === 'pause') control.pause();
+  else if (action === 'resume') control.resume();
+  else if (action === 'cancel') control.cancel();
+  else {
+    res.status(400).json({ error: 'Unknown action.' });
+    return;
+  }
+  res.json({ success: true });
 }
