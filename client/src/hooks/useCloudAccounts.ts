@@ -1,27 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { disconnectAccount, listAccounts } from '../services/cloudService';
 import type { CloudAccount } from '../types/cloud';
 
 export function useCloudAccounts() {
-  const [accounts, setAccounts] = useState<CloudAccount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const refresh = useCallback(async () => {
-    try {
-      setAccounts(await listAccounts());
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Fetch accounts using React Query for automatic caching and state management
+  const { data: accounts = [], isLoading: loading } = useQuery<CloudAccount[]>({
+    queryKey: ['cloudAccounts'],
+    queryFn: listAccounts,
+  });
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  // Disconnect mutation with automatic cache invalidation
+  const disconnectMutation = useMutation({
+    mutationFn: (id: string) => disconnectAccount(id),
+    onSuccess: () => {
+      // Automatically refetch accounts after a successful disconnect
+      queryClient.invalidateQueries({ queryKey: ['cloudAccounts'] });
+    },
+  });
 
-  const disconnect = async (id: string) => {
-    await disconnectAccount(id);
-    await refresh();
+  return { 
+    accounts, 
+    loading, 
+    // Expose mutateAsync so it behaves like the old promise-based function
+    disconnect: disconnectMutation.mutateAsync,
+    isDisconnecting: disconnectMutation.isPending
   };
-
-  return { accounts, loading, disconnect };
 }

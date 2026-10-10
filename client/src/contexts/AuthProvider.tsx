@@ -1,29 +1,42 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as authService from '../services/authService';
 import type { User } from '../types/auth';
 import { AuthContext } from './authContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    authService
-      .me()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-  }, []);
+  // Fetch the authenticated user on mount using React Query
+  const { data: user = null, isLoading: loading } = useQuery<User | null>({
+    queryKey: ['authUser'],
+    queryFn: async () => {
+      try {
+        return await authService.me();
+      } catch {
+        return null;
+      }
+    },
+    retry: false,
+    staleTime: Infinity, // Keep user data fresh during the entire session
+  });
 
-  const login = async (email: string, password: string) =>
-    setUser(await authService.login(email, password));
+  const login = async (email: string, password: string) => {
+    const fetchedUser = await authService.login(email, password);
+    // Update the cache immediately to trigger a re-render
+    queryClient.setQueryData(['authUser'], fetchedUser);
+  };
 
-  const register = async (name: string, email: string, password: string) =>
-    setUser(await authService.register(name, email, password));
+  const register = async (name: string, email: string, password: string) => {
+    const fetchedUser = await authService.register(name, email, password);
+    queryClient.setQueryData(['authUser'], fetchedUser);
+  };
 
   const logout = async () => {
     await authService.logout();
-    setUser(null);
+    // Clear user from cache and clear all other queries to prevent data leaks
+    queryClient.setQueryData(['authUser'], null);
+    queryClient.clear();
   };
 
   return (

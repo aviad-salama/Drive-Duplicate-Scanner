@@ -17,12 +17,11 @@ const secondaryBtn =
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
-  const { accounts, loading: accountsLoading, disconnect } = useCloudAccounts();
+  const { accounts, loading: accountsLoading, disconnect, isDisconnecting } = useCloudAccounts();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [params] = useSearchParams();
   const scan = useScan();
-
   const activeId = selectedId ?? accounts[0]?.id ?? null;
 
   const showToast = (msg: string) => {
@@ -92,7 +91,7 @@ export default function DashboardPage() {
                 </select>
                 <button
                   className={secondaryBtn}
-                  disabled={scan.scanning}
+                  disabled={scan.scanning || isDisconnecting}
                   onClick={async () => {
                     if (!activeId) return;
                     await disconnect(activeId);
@@ -100,7 +99,7 @@ export default function DashboardPage() {
                     scan.reset();
                   }}
                 >
-                  נתק
+                  {isDisconnecting ? 'מנתק...' : 'נתק'}
                 </button>
               </>
             )}

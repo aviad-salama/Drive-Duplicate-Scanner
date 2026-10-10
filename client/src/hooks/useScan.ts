@@ -149,14 +149,22 @@ const removeFromGroups = (file: CloudFile) => {
   );
 };
 
-  const deleteFile = async (file: CloudFile) => {
-    // Every scanned file carries its own accountId.
+    const deleteFile = async (file: CloudFile) => {
     if (!file.accountId) return false;
+
+    // 1. Snapshot previous state for a potential rollback (Optimistic Update Pattern)
+    const previousGroups = [...groups];
+
+    // 2. Optimistically update UI immediately (before API call finishes)
+    removeFromGroups(file);
+
     try {
+      // 3. Perform actual API call in the background
       await deleteFileApi(file.accountId, file.id);
-      removeFromGroups(file);
       return true;
     } catch {
+      // 4. Rollback to the snapshot if the server request fails
+      setGroups(previousGroups);
       return false;
     }
   };
