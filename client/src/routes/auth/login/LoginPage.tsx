@@ -4,15 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import type { LoginFormData } from '../../../types/auth';
 
-const input = 'w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 rounded-xl px-4 py-2.5 text-right outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15 transition';
-
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  // Initialize React Hook Form
   const {
     register,
     handleSubmit,
@@ -40,7 +37,7 @@ export default function LoginPage() {
       
       <div className="flex flex-col gap-1">
         <input 
-          className={input} 
+          className="form-input" 
           type="email" 
           placeholder="אימייל" 
           {...register('email', { required: 'Email is required' })} 
@@ -50,7 +47,7 @@ export default function LoginPage() {
 
       <div className="flex flex-col gap-1">
         <input 
-          className={input} 
+          className="form-input" 
           type="password" 
           placeholder="סיסמה" 
           {...register('password', { required: 'Password is required' })} 

@@ -27,6 +27,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer components {
+  .form-input {
+    @apply w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 rounded-xl px-4 py-2.5 text-right outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15 transition;
+  }
+}
+
 html,
 body,
 #root {

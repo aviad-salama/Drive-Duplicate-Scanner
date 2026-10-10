@@ -1,17 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import type { CloudAccount, CloudFile, DuplicateGroup } from '../types/cloud';
 
 export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGroup[]) {
   const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
+  const [prevAccountIds, setPrevAccountIds] = useState<string>('');
 
-  useEffect(() => {
+  const currentAccountIds = accounts.map((a) => a.id).join(',');
+
+  if (currentAccountIds !== prevAccountIds) {
     const accountIds = accounts.map((a) => a.id);
-    setPriorityOrder((prev) => {
-      const current = prev.filter((id) => accountIds.includes(id));
-      const newIds = accountIds.filter((id) => !current.includes(id));
-      return [...current, ...newIds];
-    });
-  }, [accounts]);
+    const current = priorityOrder.filter((id) => accountIds.includes(id));
+    const newIds = accountIds.filter((id) => !current.includes(id));
+
+    setPriorityOrder([...current, ...newIds]);
+    setPrevAccountIds(currentAccountIds);
+  }
 
   const getKeepFile = (groupFiles: CloudFile[]) => {
     let keepFile = groupFiles[0];
