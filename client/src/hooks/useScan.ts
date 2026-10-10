@@ -169,12 +169,11 @@ const removeFromGroups = (file: CloudFile) => {
     }
   };
 
-  // Keep the first (largest) file in each group and delete the rest.
-  const deleteDuplicates = async () => {
+  const deleteDuplicates = async (filesToDelete: CloudFile[]) => {
     setDeleting(true);
     let success = 0;
     let failed = 0;
-    for (const file of groups.flatMap((g) => g.files.slice(1))) {
+    for (const file of filesToDelete) {
       if (await deleteFile(file)) success++;
       else failed++;
     }

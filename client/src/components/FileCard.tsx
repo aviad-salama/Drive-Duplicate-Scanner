@@ -22,22 +22,24 @@ export default function FileCard({
 
   return (
     <div
-      className={`bg-white p-4 rounded-xl shadow relative flex flex-col items-center transition-all ${
-        isRecommendedKeep ? 'border-2 border-green-400 ring-4 ring-green-50' : 'border border-gray-200'
+      className={`bg-white dark:bg-slate-900 p-4 rounded-xl shadow relative flex flex-col items-center transition-all ${
+        isRecommendedKeep 
+          ? 'border-2 border-emerald-400 dark:border-emerald-500 ring-4 ring-emerald-50 dark:ring-emerald-900/30' 
+          : 'border border-gray-200 dark:border-slate-700'
       }`}
     >
       {isRecommendedKeep && (
-        <div className="absolute -top-3 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
-          מומלץ להשאיר (איכות מקסימלית)
+        <div className="absolute -top-3 right-4 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
+          יישמר (מועדף)
         </div>
       )}
       {isRecommendedDelete && (
         <div className="absolute -top-3 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
-          מומלץ למחיקה (איכות נמוכה)
+          יימחק (לפי תעדוף)
         </div>
       )}
 
-      <div className="relative w-full aspect-video mb-4 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 flex items-center justify-center">
+      <div className="relative w-full aspect-video mb-4 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden group border border-gray-200 dark:border-slate-700 flex items-center justify-center">
         <MediaPreview file={file} isVideo={isVideo} accountId={file.accountId ?? accountId} />
         {file.webViewLink && (
           <a
@@ -45,7 +47,7 @@ export default function FileCard({
             target="_blank"
             rel="noopener noreferrer"
             className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/40 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
-            title="לצפייה בדרייב"
+            title="Open in Cloud"
           >
             <div className="bg-white/90 rounded-full p-4 shadow-lg transform transition-transform group-hover:scale-110">
               {isVideo ? (
@@ -66,22 +68,19 @@ export default function FileCard({
       </div>
 
       <div className="w-full text-right mb-2">
-        <p className="text-base font-semibold text-gray-800 truncate" title={file.name}>
+        <p className="text-base font-semibold text-gray-800 dark:text-slate-200 truncate" title={file.name}>
           {file.name}
         </p>
         <div className="flex gap-2 items-center mt-2 flex-wrap">
-          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-bold border border-gray-200">
+          <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2 py-1 rounded font-bold border border-gray-200 dark:border-slate-700">
             {formatBytes(file.size)}
-          </span>
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono">
-            {isVideo ? 'וידאו' : 'תמונה'}
           </span>
         </div>
       </div>
 
       <button
         onClick={() => onDelete(file)}
-        className="mt-auto w-full py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 hover:text-red-700 transition-colors border border-red-100"
+        className="mt-auto w-full py-2.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-700 dark:hover:text-red-300 transition-colors border border-red-100 dark:border-red-900/50"
       >
         מחק קובץ זה
       </button>

@@ -4,6 +4,8 @@
   --animate-ping-pong: ping-pong 1.5s ease-in-out infinite;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @keyframes ping-pong {
   0%, 100% {
     left: 0;
