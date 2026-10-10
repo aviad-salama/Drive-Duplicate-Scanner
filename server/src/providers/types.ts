@@ -8,6 +8,7 @@ export interface CloudFile {
   nativeHashes: Record<string, string>; 
   webViewLink: string | null;
   thumbnailLink: string | null;
+  path: string | null;
   accountId?: string;
   accountEmail?: string;
   provider?: string;

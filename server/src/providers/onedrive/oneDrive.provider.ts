@@ -29,6 +29,9 @@ interface GraphDriveItem {
     large?: { url?: string };
     medium?: { url?: string };
   }>;
+    parentReference?: {
+    path?: string;
+  };
 }
 
 async function getAccessToken(refreshToken: string): Promise<string> {
@@ -54,6 +57,7 @@ async function getAccessToken(refreshToken: string): Promise<string> {
   return data.access_token;
 }
 
+
 const toCloudFile = (item: GraphDriveItem): CloudFile => {
   const nativeHashes: Record<string, string> = {};
 
@@ -65,6 +69,12 @@ const toCloudFile = (item: GraphDriveItem): CloudFile => {
     nativeHashes.sha1 = item.file.hashes.sha1Hash;
   }
 
+  const parentPath = item.parentReference?.path
+    ?.replace(/^\/drive\/root:/, '')
+    .replace(/\/+$/, '') ?? '';
+
+  const path = `${parentPath}/${item.name}`.replace(/\/+/g, '/');
+
   return {
     id: item.id,
     name: item.name,
@@ -73,8 +83,10 @@ const toCloudFile = (item: GraphDriveItem): CloudFile => {
     nativeHashes,
     webViewLink: item.webUrl ?? null,
     thumbnailLink: item.thumbnails?.[0]?.large?.url ?? item.thumbnails?.[0]?.medium?.url ?? null,
+    path: path.startsWith('/') ? path : `/${path}`,
   };
 };
+
 
 export const oneDriveProvider: CloudProvider = {
   id: 'onedrive',
@@ -139,7 +151,7 @@ export const oneDriveProvider: CloudProvider = {
   async *listFiles(refreshToken: string) {
     const accessToken = await getAccessToken(refreshToken);
     let nextLink: string | null =
-      'https://graph.microsoft.com/v1.0/me/drive/root/delta?$select=id,name,size,webUrl,file,thumbnails';
+      'https://graph.microsoft.com/v1.0/me/drive/root/delta?$select=id,name,size,webUrl,file,thumbnails,parentReference';
 
     do {
       const url = nextLink;

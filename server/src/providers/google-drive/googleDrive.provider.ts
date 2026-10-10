@@ -17,14 +17,15 @@ function authedDrive(refreshToken: string) {
   return { client, drive: google.drive({ version: 'v3', auth: client }) };
 }
 
-const toCloudFile = (f: drive_v3.Schema$File): CloudFile => ({
+const toCloudFile = (f: drive_v3.Schema$File, path: string): CloudFile => ({
   id: f.id ?? '',
   name: f.name ?? '',
   mimeType: f.mimeType ?? '',
   size: f.size ?? null,
-  nativeHashes: f.md5Checksum? { md5: f.md5Checksum }: {},
+  nativeHashes: f.md5Checksum ? { md5: f.md5Checksum } : {},
   webViewLink: f.webViewLink ?? null,
   thumbnailLink: f.thumbnailLink ?? null,
+  path,
 });
 
 export const googleDriveProvider: CloudProvider = {
@@ -58,23 +59,82 @@ export const googleDriveProvider: CloudProvider = {
     };
   },
 
-  async *listFiles(refreshToken) {
-    const { drive } = authedDrive(refreshToken);
-    let pageToken: string | undefined;
-    do {
-      const params: drive_v3.Params$Resource$Files$List = {
-        // Skip trashed items, folders, and Workspace files that lack the MD5 checksums used for matching.
-        q: "'me' in owners and trashed = false and mimeType != 'application/vnd.google-apps.folder' and not mimeType contains 'application/vnd.google-apps'",
-        fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink)',
-        pageSize: 250,
-        ...(pageToken ? { pageToken } : {}),
-      };
-      const response = await withRetry(() => drive.files.list(params));
-      const files = (response.data.files ?? []).map(toCloudFile);
-      if (files.length > 0) yield files;
-      pageToken = response.data.nextPageToken ?? undefined;
-    } while (pageToken);
-  },
+  
+async *listFiles(refreshToken) {
+  const { drive } = authedDrive(refreshToken);
+
+  const folders = new Map<
+    string,
+    { name: string; parents: string[] }
+  >();
+
+  let folderPageToken: string | undefined;
+
+  do {
+    const response = await withRetry(() =>
+      drive.files.list({
+        q: "'me' in owners and trashed = false and mimeType = 'application/vnd.google-apps.folder'",
+        fields: 'nextPageToken, files(id, name, parents)',
+        pageSize: 1000,
+        ...(folderPageToken ? { pageToken: folderPageToken } : {}),
+      }),
+    );
+
+    for (const folder of response.data.files ?? []) {
+      if (!folder.id) continue;
+
+      folders.set(folder.id, {
+        name: folder.name ?? '',
+        parents: folder.parents ?? [],
+      });
+    }
+
+    folderPageToken = response.data.nextPageToken ?? undefined;
+  } while (folderPageToken);
+
+  const buildPath = (file: drive_v3.Schema$File): string => {
+    const parts = [file.name ?? ''];
+    let parentId = file.parents?.[0];
+    const visited = new Set<string>();
+
+    while (parentId && !visited.has(parentId)) {
+      visited.add(parentId);
+
+      const parent = folders.get(parentId);
+      if (!parent) break;
+
+      if (parent.name) {
+        parts.unshift(parent.name);
+      }
+
+      parentId = parent.parents[0];
+    }
+
+    return `/${parts.filter(Boolean).join('/')}`;
+  };
+
+  let pageToken: string | undefined;
+
+  do {
+    const params: drive_v3.Params$Resource$Files$List = {
+      q: "'me' in owners and trashed = false and mimeType != 'application/vnd.google-apps.folder' and not mimeType contains 'application/vnd.google-apps'",
+      fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink, parents)',
+      pageSize: 250,
+      ...(pageToken ? { pageToken } : {}),
+    };
+
+    const response = await withRetry(() => drive.files.list(params));
+
+    const files = (response.data.files ?? []).map((file) =>
+      toCloudFile(file, buildPath(file)),
+    );
+
+    if (files.length > 0) yield files;
+
+    pageToken = response.data.nextPageToken ?? undefined;
+  } while (pageToken);
+},
+
 
   async deleteFile(refreshToken, fileId) {
     const { drive } = authedDrive(refreshToken);
