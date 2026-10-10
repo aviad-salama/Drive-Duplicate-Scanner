@@ -2,9 +2,61 @@
 
 @theme {
   --animate-ping-pong: ping-pong 1.5s ease-in-out infinite;
+  --color-gray-50: #f4faf6;
+  --color-gray-100: #eaf4ed;
+  --color-gray-200: #d7e8dd;
+  --color-gray-300: #bfd6c9;
+  --color-gray-400: #91ac9d;
+  --color-gray-500: #637d6d;
+  --color-gray-600: #496252;
+  --color-gray-700: #354c3e;
+  --color-gray-800: #26392f;
+  --color-gray-900: #18291f;
+  --color-slate-50: #eff8f5;
+  --color-slate-100: #deeee8;
+  --color-slate-200: #c4ddd3;
+  --color-slate-300: #a4c4b8;
+  --color-slate-400: #7fa397;
+  --color-slate-500: #5c7e73;
+  --color-slate-600: #42645c;
+  --color-slate-700: #2d4c47;
+  --color-slate-800: #1c3835;
+  --color-slate-900: #112a28;
+  --color-slate-950: #091d1c;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+.theme-canvas {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgb(32 190 151 / 20%), transparent 36%),
+    radial-gradient(ellipse at 94% 14%, rgb(255 153 93 / 18%), transparent 32%),
+    radial-gradient(ellipse at 52% 100%, rgb(250 204 21 / 9%), transparent 42%),
+    #f1f8f3;
+}
+
+.dark .theme-canvas {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgb(20 184 166 / 19%), transparent 36%),
+    radial-gradient(ellipse at 94% 14%, rgb(249 115 80 / 14%), transparent 32%),
+    radial-gradient(ellipse at 52% 100%, rgb(202 138 4 / 8%), transparent 42%),
+    #091d1c;
+}
+
+::selection {
+  color: #073b35;
+  background: #9be8d4;
+}
 
 @keyframes ping-pong {
   0%, 100% {

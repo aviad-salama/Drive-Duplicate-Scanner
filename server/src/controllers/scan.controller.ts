@@ -4,6 +4,34 @@ import { getCloudAccountForUser } from '../services/cloudAccount.service.js';
 import { createScan, finishScan, runMultiAccountScan } from '../services/scan.service.js';
 import { getScanControl, registerScan, unregisterScan } from '../services/scanControl.service.js';
 
+interface ScanErrorDetails {
+  name?: unknown;
+  code?: unknown;
+  status?: unknown;
+  response?: { data?: { error?: unknown } };
+}
+
+function getSafeScanError(error: unknown) {
+  if (!error || typeof error !== 'object') return { name: 'UnknownError' };
+
+  const details = error as ScanErrorDetails;
+  return {
+    name: typeof details.name === 'string' ? details.name : 'UnknownError',
+    code: typeof details.code === 'string' || typeof details.code === 'number' ? details.code : undefined,
+    status: typeof details.status === 'number' ? details.status : undefined,
+    providerError: typeof details.response?.data?.error === 'string'
+      ? details.response.data.error
+      : undefined,
+  };
+}
+
+function getScanFailureMessage(error: unknown, fallback: string) {
+  if (getSafeScanError(error).providerError === 'invalid_grant') {
+    return 'החיבור לאחד מחשבונות הענן פג או בוטל. נתקו את החשבון, חברו אותו מחדש ונסו שוב.';
+  }
+  return fallback;
+}
+
 // Opens an SSE stream and returns a helper that sends one event.
 function openEventStream(res: Response) {
   res.writeHead(200, {
@@ -40,9 +68,9 @@ export async function scanHandler(req: Request, res: Response) {
     await finishScan(scan.id, 'COMPLETED', result.totalScanned, result.duplicateGroups.length);
     send({ type: result.cancelled ? 'cancelled' : 'complete', ...result });
   } catch (error) {
-    console.error('Scan failed:', error);
+    console.error('Scan failed:', getSafeScanError(error));
     await finishScan(scan.id, 'FAILED');
-    send({ type: 'error', message: 'Failed to scan drive' });
+    send({ type: 'error', message: getScanFailureMessage(error, 'Failed to scan drive') });
   } finally {
     unregisterScan(control.id);
     res.end();
@@ -71,8 +99,8 @@ export async function scanAllHandler(req: Request, res: Response) {
     );
     send({ type: result.cancelled ? 'cancelled' : 'complete', ...result });
   } catch (error) {
-    console.error('Scan all failed:', error);
-    send({ type: 'error', message: 'Failed to scan all drives' });
+    console.error('Scan all failed:', getSafeScanError(error));
+    send({ type: 'error', message: getScanFailureMessage(error, 'Failed to scan all drives') });
   } finally {
     unregisterScan(control.id);
     res.end();

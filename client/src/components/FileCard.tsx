@@ -74,7 +74,7 @@ export default function FileCard({
             <div className="bg-white/90 rounded-full p-4 shadow-lg transform transition-transform group-hover:scale-110">
               {isVideo ? (
                 <svg
-                  className="w-8 h-8 text-blue-600"
+                  className="w-8 h-8 text-teal-600"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -82,7 +82,7 @@ export default function FileCard({
                 </svg>
               ) : (
                 <svg
-                  className="w-8 h-8 text-blue-600"
+                  className="w-8 h-8 text-teal-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

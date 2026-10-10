@@ -38,7 +38,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <div className={theme === 'dark' ? 'dark' : ''}>
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
+        <div className="theme-canvas min-h-screen transition-colors">
           {children}
           <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
         </div>
@@ -59,9 +59,9 @@ function ThemeToggleButton({ theme, onToggle }: { theme: Theme; onToggle: () => 
       type="button"
       onClick={onToggle}
       className="fixed bottom-5 right-5 z-50 flex items-center justify-center w-12 h-12 rounded-full
-                 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700
-                 text-gray-700 dark:text-slate-200 shadow-xl hover:scale-105 active:scale-95
-                 transition-transform"
+             bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-800
+             text-teal-800 dark:text-teal-200 shadow-xl hover:scale-105 active:scale-95
+             transition-transform"
     >
       {theme === 'dark' ? '☀️' : '🌙'}
     </button>

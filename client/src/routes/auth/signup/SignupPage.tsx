@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import type { SignupFormData } from '../../../types/auth';
 
-const input = 'w-full border border-gray-300 rounded-xl px-4 py-2.5 text-right';
+const input = 'w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 rounded-xl px-4 py-2.5 text-right outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15 transition';
 
 export default function SignupPage() {
   const { register: registerUser } = useAuth(); // Renamed to avoid collision with RHF register
@@ -34,7 +34,7 @@ export default function SignupPage() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-gray-800">הרשמה</h1>
+      <h1 className="text-2xl font-bold text-gray-800 dark:text-slate-100">הרשמה</h1>
       
       {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{error}</div>}
       
@@ -71,12 +71,12 @@ export default function SignupPage() {
       </div>
 
       <button disabled={busy}
-        className="bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 mt-2">
+        className="bg-teal-600 text-white py-2.5 rounded-xl font-semibold shadow-lg shadow-teal-600/20 hover:bg-teal-700 disabled:opacity-50 mt-2 transition-colors">
         {busy ? 'נרשם...' : 'צור חשבון'}
       </button>
       
-      <p className="text-sm text-gray-500">
-        כבר יש לך חשבון? <Link to="/login" className="text-blue-600">התחבר</Link>
+      <p className="text-sm text-gray-500 dark:text-slate-400">
+        כבר יש לך חשבון? <Link to="/login" className="text-teal-700 dark:text-teal-300 font-semibold">התחבר</Link>
       </p>
     </form>
   );

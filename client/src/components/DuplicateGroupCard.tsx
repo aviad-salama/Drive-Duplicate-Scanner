@@ -13,9 +13,9 @@ export default function DuplicateGroupCard({ group, index, accountId, onDelete, 
   const count = group.files.length;
 
   return (
-    <div className="bg-red-50/30 dark:bg-slate-900/50 p-6 rounded-2xl border border-red-100 dark:border-slate-800 shadow-sm transition-colors">
-      <h2 className="text-lg font-bold text-red-800 dark:text-red-400 mb-4 flex items-center gap-2">
-        <span className="bg-red-200 dark:bg-red-900/50 text-red-900 dark:text-red-200 px-3 py-1 rounded-full text-sm">סט #{index + 1}</span>
+    <div className="bg-white/80 dark:bg-slate-900/80 p-6 rounded-2xl border border-teal-200/80 dark:border-teal-900 shadow-sm transition-colors">
+      <h2 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+        <span className="bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 px-3 py-1 rounded-full text-sm">סט #{index + 1}</span>
         {count === 2 ? 'אותו קובץ מופיע פעמיים' : `אותו קובץ מופיע ${count} פעמים`}
       </h2>
 

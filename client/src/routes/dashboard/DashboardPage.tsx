@@ -14,7 +14,7 @@ import type { CloudFile } from '../../types/cloud';
 import { formatBytes } from '../../utils/format';
 
 const secondaryBtn =
-  'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors';
+  'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 rounded-xl hover:bg-teal-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -109,7 +109,7 @@ export default function DashboardPage() {
       {toast && <Toast message={toast} />}
       <div className="max-w-7xl mx-auto">
         
-        <header className="mb-8 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between transition-colors">
+        <header className="mb-8 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-6 rounded-2xl shadow-lg shadow-teal-950/5 dark:shadow-black/10 border border-gray-200 dark:border-slate-700 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between transition-colors">
           <div className="min-w-0 lg:flex-1">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white">סורק הכפילויות</h1>
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">שלום {user?.name}</p>
@@ -176,7 +176,7 @@ export default function DashboardPage() {
               <button
                 onClick={scan.startScanAll}
                 disabled={scan.scanning}
-                className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl shadow-md hover:bg-indigo-700 font-medium disabled:opacity-50 flex items-center gap-2"
+                className="bg-orange-500 text-white px-5 py-2.5 rounded-xl shadow-md shadow-orange-600/20 hover:bg-orange-600 font-semibold disabled:opacity-50 flex items-center gap-2 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7M4 7l8-4 8 4M4 7l8 4 8-4" />
@@ -188,7 +188,7 @@ export default function DashboardPage() {
             <button
               onClick={() => activeId && scan.startScan(activeId)}
               disabled={!activeId || scan.scanning}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-blue-700 font-medium disabled:opacity-50"
+              className="bg-teal-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-600/20 hover:bg-teal-700 font-semibold disabled:opacity-50 transition-colors"
             >
               {scan.scanning && scan.mode === 'single' ? 'סורק...' : 'התחל סריקה'}
             </button>
@@ -210,8 +210,8 @@ export default function DashboardPage() {
 
         {/* Priority & Savings UI */}
         {scan.duplicateFilesCount > 0 && accounts.length > 1 && (
-          <div className="mb-8 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-900/30">
-            <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-300 mb-4">
+          <div className="mb-8 bg-white/90 dark:bg-slate-900/90 p-6 rounded-2xl shadow-sm border border-orange-200 dark:border-orange-900/50">
+            <h3 className="font-bold text-lg text-orange-800 dark:text-orange-300 mb-4">
               תעדוף כוננים לשמירת קבצים מרובים
             </h3>
             <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">

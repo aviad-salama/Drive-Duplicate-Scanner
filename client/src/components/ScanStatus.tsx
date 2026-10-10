@@ -21,7 +21,7 @@ export default function ScanStatus({
     return (
       <div className="flex flex-col gap-1">
         <div
-          className={`flex items-center gap-3 font-bold text-lg ${paused ? 'text-amber-600' : 'text-blue-600'}`}
+          className={`flex items-center gap-3 font-bold text-lg ${paused ? 'text-amber-600' : 'text-teal-700 dark:text-teal-300'}`}
         >
           {paused ? (
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
