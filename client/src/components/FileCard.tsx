@@ -1,8 +1,8 @@
-
 import type { CloudFile } from '../types/cloud';
 import { formatBytes } from '../utils/format';
 import MediaPreview from './MediaPreview';
 import CloudBadge from './CloudBadge';
+import Breadcrumbs from './Breadcrumbs';
 
 interface Props {
   file: CloudFile;
@@ -20,21 +20,7 @@ export default function FileCard({
   onDelete,
 }: Props) {
   
-  const getPathDirection = (path: string): 'rtl' | 'ltr' => {
-    const firstLetter = path.match(/[\p{L}]/u)?.[0];
-
-    if (firstLetter && /[\u0590-\u05FF\uFB1D-\uFB4F]/u.test(firstLetter)) {
-      return 'rtl';
-    }
-
-    return 'ltr';
-  };
-
   const isVideo = file.mimeType.startsWith('video/');
-
-  const pathSegments = file.path
-    ? file.path.split('/').filter(Boolean)
-    : [];
 
   return (
     <div
@@ -116,42 +102,7 @@ export default function FileCard({
           {file.name}
         </p>
 
-        {file.path && (
-          <div className="mt-2 w-full">
-            <p className="mb-1 text-xs font-semibold text-gray-500 dark:text-slate-400">
-              מיקום:
-            </p>
-
-            <div
-              className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-gray-500 dark:text-slate-400"
-              dir={getPathDirection(file.path)}
-              title={file.path}
-            >
-              {pathSegments.map((segment, index) => (
-                <span
-                  key={`${index}-${segment}`}
-                  className="inline-flex items-center gap-1"
-                >
-                  <span
-                    dir="auto"
-                    style={{
-                      unicodeBidi: 'isolate',
-                      overflowWrap: 'anywhere',
-                    }}
-                  >
-                    {segment}
-                  </span>
-
-                  {index < pathSegments.length - 1 && (
-                    <span aria-hidden="true" dir="ltr">
-                      /
-                    </span>
-                  )}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <Breadcrumbs path={file.path} />
 
         <div className="flex gap-2 items-center mt-2 flex-wrap">
           <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2 py-1 rounded font-bold border border-gray-200 dark:border-slate-700">

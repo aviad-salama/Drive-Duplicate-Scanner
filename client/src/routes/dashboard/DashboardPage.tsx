@@ -1,17 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import BulkDeleteBar from '../../components/BulkDeleteBar';
 import DuplicateGroupCard from '../../components/DuplicateGroupCard';
 import ScanControls from '../../components/ScanControls';
 import ScanStatus from '../../components/ScanStatus';
 import Toast from '../../components/Toast';
+import PrioritySettingsBoard from '../../components/PrioritySettingsBoard';
 import { PROVIDERS, providerLabel } from '../../config/providers';
 import { useAuth } from '../../hooks/useAuth';
 import { useCloudAccounts } from '../../hooks/useCloudAccounts';
 import { useScan } from '../../hooks/useScan';
+import { usePriorityManager } from '../../hooks/usePriorityManager';
 import { connectUrl } from '../../services/cloudService';
 import type { CloudFile } from '../../types/cloud';
-import { formatBytes } from '../../utils/format';
 
 const secondaryBtn =
   'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 rounded-xl hover:bg-teal-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors';
@@ -22,19 +23,9 @@ export default function DashboardPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [params] = useSearchParams();
+  
   const scan = useScan();
-
-  const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
-
-  // Initialize or update priority array when accounts change
-  useEffect(() => {
-    const accountIds = accounts.map((a) => a.id);
-    setPriorityOrder((prev) => {
-      const current = prev.filter((id) => accountIds.includes(id));
-      const newIds = accountIds.filter((id) => !current.includes(id));
-      return [...current, ...newIds];
-    });
-  }, [accounts]);
+  const priorityManager = usePriorityManager(accounts, scan.groups);
 
   const activeId = selectedId ?? accounts[0]?.id ?? null;
 
@@ -48,58 +39,12 @@ export default function DashboardPage() {
     showToast(ok ? `הקובץ ${file.name} הועבר לאשפה` : 'שגיאה במחיקת הקובץ');
   };
 
-  // Logic to determine which file to keep in a group, based on Priority
-  const getKeepFile = (groupFiles: CloudFile[]) => {
-    let keepFile = groupFiles[0];
-    let bestPriority = Infinity;
-
-    groupFiles.forEach((file) => {
-      if (!file.accountId) return;
-      const prioIndex = priorityOrder.indexOf(file.accountId);
-      if (prioIndex !== -1 && prioIndex < bestPriority) {
-        bestPriority = prioIndex;
-        keepFile = file;
-      }
-    });
-    return keepFile;
-  };
-
-  // Calculate savings per account dynamically
-  const savings = useMemo(() => {
-    const calc: Record<string, number> = {};
-    accounts.forEach((a) => (calc[a.id] = 0));
-
-    scan.groups.forEach((group) => {
-      const keepFile = getKeepFile(group.files);
-      group.files.forEach((file) => {
-        if (file !== keepFile && file.accountId && file.size) {
-          calc[file.accountId] = (calc[file.accountId] || 0) + parseInt(file.size, 10);
-        }
-      });
-    });
-    return calc;
-  }, [scan.groups, priorityOrder, accounts]);
-
   const handleBulkDelete = async () => {
-    // Generate an array of files to delete based on the exact current priority
-    const filesToDelete = scan.groups.flatMap((group) => {
-      const keepFile = getKeepFile(group.files);
-      return group.files.filter((f) => f !== keepFile);
-    });
-
+    const filesToDelete = priorityManager.getFilesToDelete();
     if (!window.confirm(`להעביר לאשפה ${filesToDelete.length} קבצים כפולים לפי התעדוף שהגדרת?`)) return;
+    
     const { success, failed } = await scan.deleteDuplicates(filesToDelete);
     showToast(`הועברו לאשפה ${success} קבצים.${failed > 0 ? ` נכשלו ${failed}.` : ''}`);
-  };
-
-  const movePriority = (index: number, direction: 'up' | 'down') => {
-    const newOrder = [...priorityOrder];
-    if (direction === 'up' && index > 0) {
-      [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
-    } else if (direction === 'down' && index < newOrder.length - 1) {
-      [newOrder[index + 1], newOrder[index]] = [newOrder[index], newOrder[index + 1]];
-    }
-    setPriorityOrder(newOrder);
   };
 
   const error = scan.error || (params.get('error') ? 'חיבור הענן נכשל, נסה שוב.' : '');
@@ -208,51 +153,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Priority & Savings UI */}
         {scan.duplicateFilesCount > 0 && accounts.length > 1 && (
-          <div className="mb-8 bg-white/90 dark:bg-slate-900/90 p-6 rounded-2xl shadow-sm border border-orange-200 dark:border-orange-900/50">
-            <h3 className="font-bold text-lg text-orange-800 dark:text-orange-300 mb-4">
-              תעדוף כוננים לשמירת קבצים מרובים
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
-              קבע איזה דרייב יקבל עדיפות. כשימצא קובץ כפול, המערכת תשמור אותו בדרייב שנמצא גבוה יותר ברשימה זו, ותמחק אותו מהשאר (על פי החישוב הזה, כך יראה החיסכון הכולל שלך).
-            </p>
-            <div className="flex flex-col gap-3">
-              {priorityOrder.map((id, index) => {
-                const acc = accounts.find((a) => a.id === id);
-                if (!acc) return null;
-                const savedBytes = savings[id] || 0;
-                return (
-                  <div key={id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                      {index + 1}. {providerLabel(acc.provider)} <span className="opacity-75">({acc.accountEmail})</span>
-                      <span className="mr-6 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded">
-                        פוטנציאל פינוי מקום: {formatBytes(savedBytes.toString())}
-                      </span>
-                    </span>
-                    <div className="flex gap-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                      <button
-                        disabled={index === 0}
-                        onClick={() => movePriority(index, 'up')}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-20 dark:text-slate-300"
-                        title="הזז למעלה"
-                      >
-                        ▲
-                      </button>
-                      <button
-                        disabled={index === priorityOrder.length - 1}
-                        onClick={() => movePriority(index, 'down')}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-20 dark:text-slate-300"
-                        title="הזז למטה"
-                      >
-                        ▼
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <PrioritySettingsBoard 
+            priorityOrder={priorityManager.priorityOrder}
+            accounts={accounts}
+            savings={priorityManager.savings}
+            movePriority={priorityManager.movePriority}
+          />
         )}
 
         <div className="flex flex-col gap-8">
@@ -264,7 +171,7 @@ export default function DashboardPage() {
             />
           )}
           {scan.groups.map((group, i) => {
-            const keepFile = getKeepFile(group.files);
+            const keepFile = priorityManager.getKeepFile(group.files);
             return (
               <DuplicateGroupCard
                 key={`${group.files[0]?.accountId ?? ''}:${group.files[0]?.id ?? i}`}
