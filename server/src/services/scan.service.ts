@@ -42,6 +42,7 @@ export async function runMultiAccountScan(
   onProgress: (progress: ScanProgress) => void,
   control: ScanControl,
 ) {
+  // List every account before grouping so duplicates can span connected accounts.
   const allFiles: CloudFile[] = [];
   let scannedCount = 0;
   let cancelled = false;
@@ -52,6 +53,7 @@ export async function runMultiAccountScan(
       const refreshToken = decrypt(acc.refreshTokenEnc);
 
       for await (const page of provider.listFiles(refreshToken)) {
+        // Pause and cancellation take effect between provider pages, not mid-request.
         await control.checkpoint();
 
         const decorated = page.map((file) => ({
@@ -109,6 +111,7 @@ export async function runMultiAccountScan(
 
     await control.checkpoint();
 
+    // Cache per account/file because IDs may collide across providers or accounts.
     const provider = getProvider(account.provider);
     const refreshToken = decrypt(account.refreshTokenEnc);
     const { stream } = await provider.streamFile(refreshToken, file.id);

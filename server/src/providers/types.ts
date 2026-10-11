@@ -20,12 +20,15 @@ export interface ConnectedAccountInfo {
   refreshToken: string;
 }
 
+/** Adapter contract implemented by each cloud storage provider. */
 export interface CloudProvider {
   id: string;
   getAuthUrl(state: string): string;
   exchangeCode(code: string): Promise<ConnectedAccountInfo>;
-  listFiles(refreshToken: string): AsyncGenerator<CloudFile[]>; // Each yield returns one page of files.
+  // Yields paginated results so scans can report progress while listing large accounts.
+  listFiles(refreshToken: string): AsyncGenerator<CloudFile[]>;
   deleteFile(refreshToken: string, fileId: string): Promise<void>;
+  // Streams file contents for fingerprinting or ranged media responses; avoid buffering large files.
   streamFile(
     refreshToken: string,
     fileId: string,

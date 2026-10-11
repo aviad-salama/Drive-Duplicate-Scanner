@@ -11,6 +11,7 @@ import type { CloudFile, DuplicateGroup } from '../types/cloud';
 
 export type ScanMode = 'single' | 'all';
 
+/** Owns the EventSource lifecycle and UI state for single- and multi-account scans. */
 export function useScan() {
   const [groups, setGroups] = useState<DuplicateGroup[]>([]);
   const [scanning, setScanning] = useState(false);
@@ -77,6 +78,7 @@ export function useScan() {
       es.close();
     };
 
+    // The server sends a started event first, then progress and one terminal event.
     es.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'started') {

@@ -5,6 +5,7 @@ export type Sha256Calculator = (file: CloudFile) => Promise<string>;
 
 type FileKey = string;
 
+// Include the account ID because file IDs are only unique within a cloud account.
 function getFileKey(file: CloudFile): FileKey {
   return `${file.accountId ?? ''}:${file.id}`;
 }
@@ -89,6 +90,10 @@ export function countNativeDuplicateGroups(files: CloudFile[]): number {
   return buildGroups(files, sets).length;
 }
 
+/**
+ * Groups files connected by matching provider hashes, using streamed SHA-256
+ * only for same-size buckets that have no hash algorithm common to every file.
+ */
 export async function findDuplicateGroups(
   files: CloudFile[],
   calculateSha256: Sha256Calculator,
@@ -104,6 +109,7 @@ export async function findDuplicateGroups(
 
     const commonAlgorithms = getCommonAlgorithms(bucket);
 
+    // Avoid downloading file contents when provider hashes can be compared.
     if (commonAlgorithms.size > 0) continue;
 
     const representatives = new Map<FileKey, CloudFile>();

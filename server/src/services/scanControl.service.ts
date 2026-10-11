@@ -7,7 +7,7 @@ export class ScanCancelledError extends Error {
   }
 }
 
-// Holds the pause/cancel state of one running scan.
+// Holds the pause/cancel state of one running scan; callers must checkpoint between work units.
 export class ScanControl {
   readonly id: string = randomUUID();
   readonly userId: string;
@@ -34,7 +34,7 @@ export class ScanControl {
     this.flush();
   }
 
-  // Call between units of work: blocks while paused, throws if cancelled.
+  // Blocks while paused and throws on cancellation, allowing long scans to stop cooperatively.
   async checkpoint() {
     while (this.paused && !this.cancelled) {
       await new Promise<void>((resolve) => this.waiters.push(resolve));
@@ -61,7 +61,7 @@ export function unregisterScan(id: string) {
   activeScans.delete(id);
 }
 
-// Only the owner of the scan can control it.
+// Return a control handle only to the user who owns the scan.
 export function getScanControl(id: string, userId: string): ScanControl | undefined {
   const control = activeScans.get(id);
   return control && control.userId === userId ? control : undefined;
