@@ -1,3 +1,4 @@
+import { PlayIcon, PauseIcon, CancelIcon } from './icons';
 interface Props {
   paused: boolean;
   onPause: () => void;
@@ -13,9 +14,7 @@ export default function ScanControls({ paused, onPause, onResume, onCancel }: Pr
           onClick={onResume}
           className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-emerald-700"
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
-          </svg>
+          <PlayIcon className="w-4 h-4" />
           המשך
         </button>
       ) : (
@@ -23,9 +22,7 @@ export default function ScanControls({ paused, onPause, onResume, onCancel }: Pr
           onClick={onPause}
           className="flex items-center gap-1.5 bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-amber-600"
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-          </svg>
+          <PauseIcon className="w-4 h-4" />
           השהה
         </button>
       )}
@@ -33,9 +30,7 @@ export default function ScanControls({ paused, onPause, onResume, onCancel }: Pr
         onClick={onCancel}
         className="flex items-center gap-1.5 bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-xl text-sm font-medium hover:bg-red-100"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <CancelIcon className="w-4 h-4" />
         בטל סריקה
       </button>
     </div>

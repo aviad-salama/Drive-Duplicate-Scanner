@@ -3,7 +3,7 @@ import { formatBytes } from '../utils/format';
 import MediaPreview from './MediaPreview';
 import CloudBadge from './CloudBadge';
 import Breadcrumbs from './Breadcrumbs';
-
+import { PlayIcon, DocumentIcon } from './icons';
 interface Props {
   file: CloudFile;
   accountId: string;
@@ -59,27 +59,9 @@ export default function FileCard({
           >
             <div className="bg-white/90 rounded-full p-4 shadow-lg transform transition-transform group-hover:scale-110">
               {isVideo ? (
-                <svg
-                  className="w-8 h-8 text-teal-600"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+                <PlayIcon className="w-8 h-8 text-teal-600" />
               ) : (
-                <svg
-                  className="w-8 h-8 text-teal-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
+                <DocumentIcon className="w-8 h-8 text-teal-600" />
               )}
             </div>
           </a>

@@ -13,6 +13,7 @@ import { useScan } from '../../hooks/useScan';
 import { usePriorityManager } from '../../hooks/usePriorityManager';
 import { connectUrl } from '../../services/cloudService';
 import type { CloudFile } from '../../types/cloud';
+import { ScanAllIcon } from '../../components/icons';
 
 const secondaryBtn =
   'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 rounded-xl hover:bg-teal-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors';
@@ -123,9 +124,7 @@ export default function DashboardPage() {
                 disabled={scan.scanning}
                 className="bg-orange-500 text-white px-5 py-2.5 rounded-xl shadow-md shadow-orange-600/20 hover:bg-orange-600 font-semibold disabled:opacity-50 flex items-center gap-2 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7M4 7l8-4 8 4M4 7l8 4 8-4" />
-                </svg>
+                <ScanAllIcon className="w-5 h-5" />
                 {scan.scanning && scan.mode === 'all' ? 'סורק...' : 'סרוק הכל'}
               </button>
             )}
