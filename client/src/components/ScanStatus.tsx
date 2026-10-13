@@ -19,6 +19,14 @@ export default function ScanStatus({
   groupsCount,
   currentAccount,
 }: Props) {
+  let idleMessage = 'מצא קבצים כפולים שמבזבזים לך מקום';
+
+  if (cancelled) {
+    idleMessage = `הסריקה בוטלה. נסרקו ${displayScanned} קבצים, נמצאו ${groupsCount} סטים כפולים עד כה.`;
+  } else if (displayScanned > 0) {
+    idleMessage = `נסרקו ${displayScanned} קבצים. נמצאו ${groupsCount} סטים כפולים.`;
+  }
+
   if (scanning) {
     return (
       <div className="flex flex-col gap-1">
@@ -45,12 +53,6 @@ export default function ScanStatus({
   }
 
   return (
-    <Text variant="dimmed">
-      {cancelled
-        ? `הסריקה בוטלה. נסרקו ${displayScanned} קבצים, נמצאו ${groupsCount} סטים כפולים עד כה.`
-        : displayScanned > 0
-        ? `נסרקו ${displayScanned} קבצים. נמצאו ${groupsCount} סטים כפולים.`
-        : 'מצא קבצים כפולים שמבזבזים לך מקום'}
-    </Text>
+    <Text variant="dimmed">{idleMessage}</Text>
   );
 }

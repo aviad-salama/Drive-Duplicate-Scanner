@@ -12,24 +12,30 @@ interface ScanErrorDetails {
 }
 
 function getSafeScanError(error: unknown) {
-  if (!error || typeof error !== 'object') return { name: 'UnknownError' };
+  if (!error || typeof error !== 'object') {
+    return { name: 'UnknownError' };
+  }
 
   const details = error as ScanErrorDetails;
+  const name = typeof details.name === 'string' ? details.name : 'UnknownError';
+  const code = typeof details.code === 'string' || typeof details.code === 'number'
+    ? details.code
+    : undefined;
+  const status = typeof details.status === 'number' ? details.status : undefined;
+  const providerError = typeof details.response?.data?.error === 'string'
+    ? details.response.data.error
+    : undefined;
+
   return {
-    name: typeof details.name === 'string' ? details.name : 'UnknownError',
-    code: typeof details.code === 'string' || typeof details.code === 'number' ? details.code : undefined,
-    status: typeof details.status === 'number' ? details.status : undefined,
-    providerError: typeof details.response?.data?.error === 'string'
-      ? details.response.data.error
-      : undefined,
+    name,
+    code,
+    status,
+    providerError,
   };
 }
 
 function getScanFailureMessage(error: unknown, fallback: string) {
-  if (getSafeScanError(error).providerError === 'invalid_grant') {
-    return 'החיבור לאחד מחשבונות הענן פג או בוטל. נתקו את החשבון, חברו אותו מחדש ונסו שוב.';
-  }
-  return fallback;
+  return getSafeScanError(error).providerError || fallback;
 }
 
 // Opens an SSE stream and returns a helper that sends one event.

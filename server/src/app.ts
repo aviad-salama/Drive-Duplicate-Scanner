@@ -12,9 +12,19 @@ const allowedOrigins = [
   /^https:\/\/drive-duplicate-scanner.*\.vercel\.app$/ 
 ];
 
+function isAllowedOrigin(origin: string) {
+  return allowedOrigins.some((allowedOrigin) => {
+    if (typeof allowedOrigin === 'string') {
+      return allowedOrigin === origin;
+    }
+
+    return allowedOrigin.test(origin);
+  });
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
+    if (!origin || isAllowedOrigin(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

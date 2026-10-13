@@ -46,10 +46,13 @@ export default function DashboardPage() {
 
   const handleBulkDelete = async () => {
     const filesToDelete = priorityManager.getFilesToDelete();
-    if (!window.confirm(`להעביר לאשפה ${filesToDelete.length} קבצים כפולים לפי התעדוף שהגדרת?`)) return;
+    if (!window.confirm(`להעביר לאשפה ${filesToDelete.length} קבצים כפולים לפי התעדוף שהגדרת?`)) {
+      return;
+    }
     
     const { success, failed } = await scan.deleteDuplicates(filesToDelete);
-    showToast(`הועברו לאשפה ${success} קבצים.${failed > 0 ? ` נכשלו ${failed}.` : ''}`);
+    const failedMessage = failed > 0 ? ` נכשלו ${failed}.` : '';
+    showToast(`הועברו לאשפה ${success} קבצים.${failedMessage}`);
   };
 
   const error = scan.error || (params.get('error') ? 'חיבור הענן נכשל, נסה שוב.' : '');

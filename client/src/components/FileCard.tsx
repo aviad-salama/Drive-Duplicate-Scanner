@@ -26,15 +26,23 @@ export default function FileCard({
 }: Props) {
   
   const isVideo = file.mimeType.startsWith('video/');
+  if (isRecommendedKeep) {
+    var cardStateClasses = 'border-2 border-emerald-400 dark:border-emerald-500 ring-4 ring-emerald-50 dark:ring-emerald-900/30';
+  } else {
+    var cardStateClasses = 'border border-gray-200 dark:border-slate-700';
+  }
+
+  const deleteButtonClasses = [
+    'mt-auto w-full rounded-lg bg-red-50 text-red-600 shadow-none',
+    'hover:bg-red-100 hover:text-red-700',
+    'dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50',
+    'dark:hover:text-red-300',
+  ].join(' ');
 
   return (
     <Card
       padding="sm"
-      className={`relative flex flex-col items-center shadow transition-all ${
-        isRecommendedKeep
-          ? 'border-2 border-emerald-400 dark:border-emerald-500 ring-4 ring-emerald-50 dark:ring-emerald-900/30'
-          : 'border border-gray-200 dark:border-slate-700'
-      }`}
+      className={`relative flex flex-col items-center shadow transition-all ${cardStateClasses}`}
     >
       {isRecommendedKeep && (
         <Badge variant="success" className="absolute -top-3 right-4 z-10 rounded-full bg-emerald-500 px-3 py-1 text-white shadow-sm">
@@ -104,7 +112,7 @@ export default function FileCard({
         variant="danger"
         size="md"
         onClick={() => onDelete(file)}
-        className="mt-auto w-full rounded-lg bg-red-50 text-red-600 shadow-none hover:bg-red-100 hover:text-red-700 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 dark:hover:text-red-300"
+        className={deleteButtonClasses}
       >
         מחק קובץ זה
       </Button>
