@@ -15,35 +15,40 @@ export type ScanMode = 'single' | 'all';
 /** Owns the EventSource lifecycle and UI state for single- and multi-account scans. */
 export function useScan() {
   const [groups, setGroups] = useState<DuplicateGroup[]>([]);
-  const [scanning, setScanning] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const [cancelled, setCancelled] = useState(false);
-  const [mode, setMode] = useState<ScanMode>('single');
-  const [currentAccount, setCurrentAccount] = useState('');
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
-  const [targetScanned, setTargetScanned] = useState(0);
   const [displayScanned, setDisplayScanned] = useState(0);
-  const [liveDuplicates, setLiveDuplicates] = useState(0);
   const sourceRef = useRef<EventSource | null>(null);
   const scanIdRef = useRef<string | null>(null);
+  const [scanState, setScanState] = useState({
+    scanning: false,
+    paused: false,
+    cancelled: false,
+    mode: 'single' as ScanMode,
+    currentAccount: '',
+    deleting: false,
+    error: '',
+    targetScanned: 0,
+    liveDuplicates: 0,
+  });
+   
+
+
 
   // Animate the file counter.
   useEffect(() => {
-    if (!scanning || displayScanned >= targetScanned) {
+    if (!scanState.scanning || displayScanned >= scanState.targetScanned) {
       return;
     }
     const interval = setInterval(() => {
       setDisplayScanned((prev) => {
-        const diff = targetScanned - prev;
+        const diff = scanState.targetScanned - prev;
         if (diff <= 0) {
-          return targetScanned;
+          return scanState.targetScanned;
         }
         return prev + Math.max(1, Math.ceil(diff / 8));
       });
     }, 30);
     return () => clearInterval(interval);
-  }, [displayScanned, targetScanned, scanning]);
+  }, [displayScanned, scanState.targetScanned, scanState.scanning]);
 
   // Closing the connection also cancels the scan on the server.
   useEffect(() => () => sourceRef.current?.close(), []);
@@ -53,32 +58,40 @@ export function useScan() {
     sourceRef.current = null;
     scanIdRef.current = null;
     setGroups([]);
-    setScanning(false);
-    setPaused(false);
-    setCancelled(false);
-    setCurrentAccount('');
-    setError('');
-    setTargetScanned(0);
     setDisplayScanned(0);
-    setLiveDuplicates(0);
+    // איפוס קל ומהיר של כל הסטייטים
+    setScanState({
+      scanning: false,
+      paused: false,
+      cancelled: false,
+      mode: 'single',
+      currentAccount: '',
+      deleting: false,
+      error: '',
+      targetScanned: 0,
+      liveDuplicates: 0,
+    });
   };
 
   // Shared by the single-account and all-accounts scans.
   const run = (url: string, nextMode: ScanMode) => {
     reset();
-    setMode(nextMode);
-    setScanning(true);
+    setScanState(prev => ({ ...prev, scanning: true, mode: nextMode }));
+  
 
     const es = new EventSource(url, { withCredentials: true });
     sourceRef.current = es;
 
     const finish = (data: { duplicateGroups: DuplicateGroup[]; totalScanned: number }, wasCancelled: boolean) => {
       setGroups(data.duplicateGroups);
-      setTargetScanned(data.totalScanned);
       setDisplayScanned(data.totalScanned);
-      setCancelled(wasCancelled);
-      setScanning(false);
-      setPaused(false);
+      setScanState(prev => ({
+        ...prev,
+        targetScanned: data.totalScanned,
+        cancelled: wasCancelled,
+        scanning: false,
+        paused: false,
+      }));
       scanIdRef.current = null;
       es.close();
     };
@@ -89,25 +102,24 @@ export function useScan() {
       if (data.type === 'started') {
         scanIdRef.current = data.scanId;
       } else if (data.type === 'progress') {
-        setTargetScanned(data.scannedCount);
-        setLiveDuplicates(data.duplicatesCount);
-        setCurrentAccount(`${providerLabel(data.currentProvider)} – ${data.currentAccount}`);
+        setScanState(prev => ({
+          ...prev,
+          targetScanned: data.scannedCount,
+          liveDuplicates: data.duplicatesCount,
+          currentAccount: `${providerLabel(data.currentProvider)} – ${data.currentAccount}`,
+        }));
       } else if (data.type === 'complete') {
         finish(data, false);
       } else if (data.type === 'cancelled') {
         finish(data, true);
       } else if (data.type === 'error') {
-        setError(data.message);
-        setScanning(false);
-        setPaused(false);
+        setScanState(prev => ({ ...prev, error: data.message, scanning: false, paused: false }));
         es.close();
       }
     };
 
     es.onerror = () => {
-      setError(he.errors.scanConnection);
-      setScanning(false);
-      setPaused(false);
+      setScanState(prev => ({ ...prev, error: he.errors.scanConnection, scanning: false, paused: false }));
       es.close();
     };
   };
@@ -130,13 +142,13 @@ export function useScan() {
 
   const pause = async () => {
     if (await sendControl('pause')) {
-      setPaused(true);
+      setScanState(prev => ({ ...prev, paused: true }));
     }
   };
 
   const resume = async () => {
     if (await sendControl('resume')) {
-      setPaused(false);
+      setScanState(prev => ({ ...prev, paused: false }));
     }
   };
 
@@ -187,7 +199,7 @@ const removeFromGroups = (file: CloudFile) => {
   };
 
   const deleteDuplicates = async (filesToDelete: CloudFile[]) => {
-    setDeleting(true);
+    setScanState(prev => ({ ...prev, deleting: true }));
     let success = 0;
     let failed = 0;
     for (const file of filesToDelete) {
@@ -197,7 +209,7 @@ const removeFromGroups = (file: CloudFile) => {
         failed++;
       }
     }
-    setDeleting(false);
+    setScanState(prev => ({ ...prev, deleting: false }));
     return { success, failed };
   };
 
@@ -205,15 +217,8 @@ const removeFromGroups = (file: CloudFile) => {
 
   return {
     groups,
-    scanning,
-    paused,
-    cancelled,
-    mode,
-    currentAccount,
-    deleting,
-    error,
+    ...scanState,
     displayScanned,
-    liveDuplicates,
     duplicateFilesCount,
     startScan,
     startScanAll,

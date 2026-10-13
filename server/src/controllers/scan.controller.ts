@@ -51,7 +51,12 @@ function openEventStream(res: Response) {
 // SSE: scan a single account.
 export async function scanHandler(req: Request, res: Response) {
   const userId = req.user!.id;
-  const account = await getCloudAccountForUser(req.cloud!.accountId, userId);
+  if (!req.cloud) {
+    res.status(500).json({ error: 'Cloud account context is unavailable.' });
+    return;
+  }
+
+  const account = await getCloudAccountForUser(req.cloud.accountId, userId);
   if (!account) {
     res.status(404).json({ error: 'Cloud account not found.' });
     return;

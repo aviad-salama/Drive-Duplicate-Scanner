@@ -1,13 +1,32 @@
 import type { Request, Response } from 'express';
 
+function getCloudContext(req: Request, res: Response) {
+  if (!req.cloud) {
+    res.status(500).json({ error: 'Cloud account context is unavailable.' });
+    return null;
+  }
+
+  return req.cloud;
+}
+
 export async function deleteFileHandler(req: Request, res: Response) {
-  const { provider, refreshToken } = req.cloud!;
+  const cloud = getCloudContext(req, res);
+  if (!cloud) {
+    return;
+  }
+
+  const { provider, refreshToken } = cloud;
   await provider.deleteFile(refreshToken, String(req.params['fileId']));
   res.json({ success: true });
 }
 
 export async function streamFileHandler(req: Request, res: Response) {
-  const { provider, refreshToken } = req.cloud!;
+  const cloud = getCloudContext(req, res);
+  if (!cloud) {
+    return;
+  }
+
+  const { provider, refreshToken } = cloud;
   const { status, headers, stream } = await provider.streamFile(
     refreshToken,
     String(req.params['fileId']),
@@ -36,7 +55,12 @@ export async function streamFileHandler(req: Request, res: Response) {
 }
 
 export async function thumbnailHandler(req: Request, res: Response) {
-  const { provider, refreshToken } = req.cloud!;
+  const cloud = getCloudContext(req, res);
+  if (!cloud) {
+    return;
+  }
+
+  const { provider, refreshToken } = cloud;
   try {
     const thumb = await provider.getThumbnail(refreshToken, String(req.params['fileId']));
     if (thumb) {
