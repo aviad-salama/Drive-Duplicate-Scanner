@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as authService from '../services/authService';
 import type { User } from '../types/auth';
-import { AuthContext } from './AuthContext';
+import { AuthContext } from './authContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
