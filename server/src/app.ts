@@ -7,7 +7,21 @@ import apiRoutes from './routes/index.js';
 
 const app = express();
 
-app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
+const allowedOrigins = [
+  env.CLIENT_URL,
+  /^https:\/\/drive-duplicate-scanner.*\.vercel\.app$/ 
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
