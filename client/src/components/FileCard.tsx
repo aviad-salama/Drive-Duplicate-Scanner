@@ -8,6 +8,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Text } from './ui/Typography';
 import { Card } from './ui/Card';
+
 interface Props {
   file: CloudFile;
   accountId: string;
