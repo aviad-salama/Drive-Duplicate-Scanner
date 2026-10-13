@@ -1,4 +1,5 @@
 import { PauseIcon, SpinnerIcon } from './icons';
+import { Text } from './ui/Typography';
 interface Props {
   scanning: boolean;
   paused: boolean;
@@ -34,22 +35,22 @@ export default function ScanStatus({
           </span>
         </div>
         {currentAccount && (
-          <div className="text-sm text-gray-500 mr-8">חשבון נוכחי: {currentAccount}</div>
+          <Text size="sm" variant="dimmed" className="mr-8">חשבון נוכחי: {currentAccount}</Text>
         )}
-        <div className="text-sm font-semibold text-red-500 mr-8">
+        <Text as="div" size="sm" variant="danger" className="mr-8 font-semibold">
           נמצאו עד כה {liveDuplicates} סטים של כפילויות!
-        </div>
+        </Text>
       </div>
     );
   }
 
   return (
-    <p className="text-gray-500">
+    <Text variant="dimmed">
       {cancelled
         ? `הסריקה בוטלה. נסרקו ${displayScanned} קבצים, נמצאו ${groupsCount} סטים כפולים עד כה.`
         : displayScanned > 0
         ? `נסרקו ${displayScanned} קבצים. נמצאו ${groupsCount} סטים כפולים.`
         : 'מצא קבצים כפולים שמבזבזים לך מקום'}
-    </p>
+    </Text>
   );
 }

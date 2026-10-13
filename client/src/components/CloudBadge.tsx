@@ -5,7 +5,9 @@ interface Props {
 }
 
 export default function CloudBadge({ provider, email }: Props) {
-  if (!provider && !email) return null;
+  if (!provider && !email) {
+    return null;
+  }
 
   const isGoogle = provider === 'google-drive';
   const isOneDrive = provider === 'onedrive';

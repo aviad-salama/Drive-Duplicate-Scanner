@@ -20,7 +20,9 @@ export class DisjointSet {
       return key;
     }
 
-    if (parent === key) return key;
+    if (parent === key) {
+      return key;
+    }
 
     const root = this.find(parent);
     this.parent.set(key, root);
@@ -31,7 +33,9 @@ export class DisjointSet {
     const rootA = this.find(a);
     const rootB = this.find(b);
 
-    if (rootA === rootB) return;
+    if (rootA === rootB) {
+      return;
+    }
 
     const sizeA = this.size.get(rootA) ?? 1;
     const sizeB = this.size.get(rootB) ?? 1;

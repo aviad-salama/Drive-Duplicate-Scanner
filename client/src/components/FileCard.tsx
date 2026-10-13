@@ -4,6 +4,10 @@ import MediaPreview from './MediaPreview';
 import CloudBadge from './CloudBadge';
 import Breadcrumbs from './Breadcrumbs';
 import { PlayIcon, DocumentIcon } from './icons';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Text } from './ui/Typography';
+import { Card } from './ui/Card';
 interface Props {
   file: CloudFile;
   accountId: string;
@@ -23,23 +27,24 @@ export default function FileCard({
   const isVideo = file.mimeType.startsWith('video/');
 
   return (
-    <div
-      className={`bg-white dark:bg-slate-900 p-4 rounded-xl shadow relative flex flex-col items-center transition-all ${
+    <Card
+      padding="sm"
+      className={`relative flex flex-col items-center shadow transition-all ${
         isRecommendedKeep
           ? 'border-2 border-emerald-400 dark:border-emerald-500 ring-4 ring-emerald-50 dark:ring-emerald-900/30'
           : 'border border-gray-200 dark:border-slate-700'
       }`}
     >
       {isRecommendedKeep && (
-        <div className="absolute -top-3 right-4 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
+        <Badge variant="success" className="absolute -top-3 right-4 z-10 rounded-full bg-emerald-500 px-3 py-1 text-white shadow-sm">
           יישמר (מועדף)
-        </div>
+        </Badge>
       )}
 
       {isRecommendedDelete && (
-        <div className="absolute -top-3 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
+        <Badge variant="danger" className="absolute -top-3 right-4 z-10 rounded-full bg-red-500 px-3 py-1 text-white shadow-sm">
           יימחק (לפי תעדוף)
-        </div>
+        </Badge>
       )}
 
       <div className="relative w-full aspect-video mb-4 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden group border border-gray-200 dark:border-slate-700 flex items-center justify-center">
@@ -76,29 +81,32 @@ export default function FileCard({
       </div>
 
       <div className="w-full text-right mb-2">
-        <p
-          className="text-base font-semibold text-gray-800 dark:text-slate-200 truncate"
+        <Text
+          as="p"
+          className="truncate font-semibold"
           title={file.name}
           dir="auto"
         >
           {file.name}
-        </p>
+        </Text>
 
         <Breadcrumbs path={file.path} />
 
         <div className="flex gap-2 items-center mt-2 flex-wrap">
-          <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2 py-1 rounded font-bold border border-gray-200 dark:border-slate-700">
+          <Badge>
             {formatBytes(file.size)}
-          </span>
+          </Badge>
         </div>
       </div>
 
-      <button
+      <Button
+        variant="danger"
+        size="md"
         onClick={() => onDelete(file)}
-        className="mt-auto w-full py-2.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-700 dark:hover:text-red-300 transition-colors border border-red-100 dark:border-red-900/50"
+        className="mt-auto w-full rounded-lg bg-red-50 text-red-600 shadow-none hover:bg-red-100 hover:text-red-700 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 dark:hover:text-red-300"
       >
         מחק קובץ זה
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

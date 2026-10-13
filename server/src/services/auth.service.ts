@@ -17,7 +17,9 @@ const toPublic = (u: { id: string; email: string; name: string }): PublicUser =>
 });
 
 export async function registerUser(name: string, email: string, password: string) {
-  if (await findUserByEmail(email)) throw new AppError(409, 'Email address is already in use.');
+  if (await findUserByEmail(email)) {
+    throw new AppError(409, 'Email address is already in use.');
+  }
   const passwordHash = await bcrypt.hash(password, 10);
   return toPublic(await createUser({ name, email, passwordHash }));
 }
@@ -25,7 +27,9 @@ export async function registerUser(name: string, email: string, password: string
 export async function loginUser(email: string, password: string) {
   const user = await findUserByEmail(email);
   const valid = user ? await bcrypt.compare(password, user.passwordHash) : false;
-  if (!user || !valid) throw new AppError(401, 'Invalid credentials.');
+  if (!user || !valid) {
+    throw new AppError(401, 'Invalid credentials.');
+  }
   return toPublic(user);
 }
 

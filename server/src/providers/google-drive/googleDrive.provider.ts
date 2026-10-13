@@ -51,7 +51,9 @@ export const googleDriveProvider: CloudProvider = {
       audience: env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    if (!payload?.sub || !payload.email) throw new AppError(400, 'Invalid Google identity');
+    if (!payload?.sub || !payload.email) {
+      throw new AppError(400, 'Invalid Google identity');
+    }
     return {
       providerAccountId: payload.sub,
       accountEmail: payload.email,
@@ -81,7 +83,9 @@ async *listFiles(refreshToken) {
     );
 
     for (const folder of response.data.files ?? []) {
-      if (!folder.id) continue;
+      if (!folder.id) {
+        continue;
+      }
 
       folders.set(folder.id, {
         name: folder.name ?? '',
@@ -101,7 +105,9 @@ async *listFiles(refreshToken) {
       visited.add(parentId);
 
       const parent = folders.get(parentId);
-      if (!parent) break;
+      if (!parent) {
+        break;
+      }
 
       if (parent.name) {
         parts.unshift(parent.name);
@@ -129,7 +135,9 @@ async *listFiles(refreshToken) {
       toCloudFile(file, buildPath(file)),
     );
 
-    if (files.length > 0) yield files;
+    if (files.length > 0) {
+      yield files;
+    }
 
     pageToken = response.data.nextPageToken ?? undefined;
   } while (pageToken);
@@ -159,13 +167,19 @@ async *listFiles(refreshToken) {
     const { client, drive } = authedDrive(refreshToken);
     const meta = await drive.files.get({ fileId, fields: 'thumbnailLink' });
     const link = meta.data.thumbnailLink;
-    if (!link) return null;
+    if (!link) {
+      return null;
+    }
 
     const { token } = await client.getAccessToken();
-    if (!token) return null;
+    if (!token) {
+      return null;
+    }
 
     const response = await fetch(link, { headers: { Authorization: `Bearer ${token}` } });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      return null;
+    }
 
     return {
       contentType: response.headers.get('content-type') ?? 'image/jpeg',

@@ -24,7 +24,9 @@ const loginSchema = z.object({
 
 function parse<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
-  if (!result.success) throw new AppError(400, result.error.issues[0]?.message ?? 'Invalid input.');
+  if (!result.success) {
+    throw new AppError(400, result.error.issues[0]?.message ?? 'Invalid input.');
+  }
   return result.data;
 }
 
@@ -52,6 +54,8 @@ export function logoutHandler(_req: Request, res: Response) {
 
 export async function meHandler(req: Request, res: Response) {
   const user = await findUserById(req.user!.id);
-  if (!user) throw new AppError(401, 'User no longer exists.');
+  if (!user) {
+    throw new AppError(401, 'User no longer exists.');
+  }
   res.json({ user: { id: user.id, email: user.email, name: user.name } });
 }

@@ -3,6 +3,9 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import type { SignupFormData } from '../../../types/auth';
+import { Title, Text } from '../../../components/ui/Typography';
+import { Button } from '../../../components/ui/Button';
+import { Alert } from '../../../components/ui/Alert';
 
 export default function SignupPage() {
   const { register: registerUser } = useAuth();
@@ -31,9 +34,9 @@ export default function SignupPage() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-gray-800 dark:text-slate-100">הרשמה</h1>
+      <Title level={1} className="text-2xl">הרשמה</Title>
       
-      {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">{error}</div>}
+      {error && <Alert variant="error" className="p-3 text-sm">{error}</Alert>}
       
       <div className="flex flex-col gap-1">
         <input 
@@ -41,7 +44,7 @@ export default function SignupPage() {
           placeholder="שם מלא" 
           {...register('name', { required: 'Full name is required' })} 
         />
-        {errors.name && <span className="text-red-500 text-sm px-1">{errors.name.message}</span>}
+        {errors.name && <Text as="span" variant="danger" size="sm" className="px-1">{errors.name.message}</Text>}
       </div>
 
       <div className="flex flex-col gap-1">
@@ -51,7 +54,7 @@ export default function SignupPage() {
           placeholder="אימייל" 
           {...register('email', { required: 'Email is required' })} 
         />
-        {errors.email && <span className="text-red-500 text-sm px-1">{errors.email.message}</span>}
+        {errors.email && <Text as="span" variant="danger" size="sm" className="px-1">{errors.email.message}</Text>}
       </div>
 
       <div className="flex flex-col gap-1">
@@ -64,17 +67,16 @@ export default function SignupPage() {
             minLength: { value: 8, message: 'Password must be at least 8 characters' }
           })} 
         />
-        {errors.password && <span className="text-red-500 text-sm px-1">{errors.password.message}</span>}
+        {errors.password && <Text as="span" variant="danger" size="sm" className="px-1">{errors.password.message}</Text>}
       </div>
 
-      <button disabled={busy}
-        className="bg-teal-600 text-white py-2.5 rounded-xl font-semibold shadow-lg shadow-teal-600/20 hover:bg-teal-700 disabled:opacity-50 mt-2 transition-colors">
+      <Button type="submit" disabled={busy} className="mt-2 w-full">
         {busy ? 'נרשם...' : 'צור חשבון'}
-      </button>
+      </Button>
       
-      <p className="text-sm text-gray-500 dark:text-slate-400">
+      <Text size="sm" variant="dimmed">
         כבר יש לך חשבון? <Link to="/login" className="text-teal-700 dark:text-teal-300 font-semibold">התחבר</Link>
-      </p>
+      </Text>
     </form>
   );
 }

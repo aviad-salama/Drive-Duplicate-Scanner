@@ -139,7 +139,9 @@ export const oneDriveProvider: CloudProvider = {
 
     const userData = (await userRes.json()) as { id: string; userPrincipalName?: string; mail?: string };
     const email = userData.mail || userData.userPrincipalName;
-    if (!email) throw new AppError(400, 'Could not determine Microsoft email');
+    if (!email) {
+      throw new AppError(400, 'Could not determine Microsoft email');
+    }
 
     return {
       providerAccountId: userData.id,
@@ -173,7 +175,9 @@ export const oneDriveProvider: CloudProvider = {
         .filter((item) => Boolean(item.file && item.file.hashes && !('@removed' in item)))
         .map(toCloudFile);
 
-      if (files.length > 0) yield files;
+      if (files.length > 0) {
+        yield files;
+      }
       nextLink = data['@odata.nextLink'] ?? null;
     } while (nextLink);
   },
@@ -193,7 +197,9 @@ export const oneDriveProvider: CloudProvider = {
   async streamFile(refreshToken: string, fileId: string, range?: string) {
     const accessToken = await getAccessToken(refreshToken);
     const headers: Record<string, string> = { Authorization: `Bearer ${accessToken}` };
-    if (range) headers['Range'] = range;
+    if (range) {
+      headers['Range'] = range;
+    }
 
     const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`, {
       headers,
@@ -206,7 +212,9 @@ export const oneDriveProvider: CloudProvider = {
     const responseHeaders: Record<string, string> = {};
     for (const h of ['content-type', 'content-length', 'content-range']) {
       const v = res.headers.get(h);
-      if (v) responseHeaders[h] = v;
+      if (v) {
+        responseHeaders[h] = v;
+      }
     }
 
     return {
@@ -225,7 +233,9 @@ export const oneDriveProvider: CloudProvider = {
       },
     );
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return null;
+    }
 
     return {
       contentType: res.headers.get('content-type') ?? 'image/jpeg',

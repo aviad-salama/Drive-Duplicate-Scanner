@@ -1,9 +1,13 @@
+import { Text } from './ui/Typography';
+
 interface Props {
   path: string | null;
 }
 
 export default function Breadcrumbs({ path }: Props) {
-  if (!path) return null;
+  if (!path) {
+    return null;
+  }
 
   const getPathDirection = (pathString: string): 'rtl' | 'ltr' => {
     const firstLetter = pathString.match(/[\p{L}]/u)?.[0];
@@ -17,12 +21,15 @@ export default function Breadcrumbs({ path }: Props) {
 
   return (
     <div className="mt-2 w-full">
-      <p className="mb-1 text-xs font-semibold text-gray-500 dark:text-slate-400">
+      <Text size="xs" variant="dimmed" className="mb-1 font-semibold">
         מיקום:
-      </p>
+      </Text>
 
-      <div
-        className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-gray-500 dark:text-slate-400"
+      <Text
+        as="div"
+        size="xs"
+        variant="dimmed"
+        className="flex flex-wrap items-center gap-x-1 gap-y-1"
         dir={getPathDirection(path)}
         title={path}
       >
@@ -48,7 +55,7 @@ export default function Breadcrumbs({ path }: Props) {
             )}
           </span>
         ))}
-      </div>
+      </Text>
     </div>
   );
 }

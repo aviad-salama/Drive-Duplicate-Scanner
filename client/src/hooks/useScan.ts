@@ -29,11 +29,15 @@ export function useScan() {
 
   // Animate the file counter.
   useEffect(() => {
-    if (!scanning || displayScanned >= targetScanned) return;
+    if (!scanning || displayScanned >= targetScanned) {
+      return;
+    }
     const interval = setInterval(() => {
       setDisplayScanned((prev) => {
         const diff = targetScanned - prev;
-        if (diff <= 0) return targetScanned;
+        if (diff <= 0) {
+          return targetScanned;
+        }
         return prev + Math.max(1, Math.ceil(diff / 8));
       });
     }, 30);
@@ -112,7 +116,9 @@ export function useScan() {
 
   const sendControl = async (action: ScanAction) => {
     const id = scanIdRef.current;
-    if (!id) return false;
+    if (!id) {
+      return false;
+    }
     try {
       await controlScan(id, action);
       return true;
@@ -122,17 +128,23 @@ export function useScan() {
   };
 
   const pause = async () => {
-    if (await sendControl('pause')) setPaused(true);
+    if (await sendControl('pause')) {
+      setPaused(true);
+    }
   };
 
   const resume = async () => {
-    if (await sendControl('resume')) setPaused(false);
+    if (await sendControl('resume')) {
+      setPaused(false);
+    }
   };
 
   // The server answers with a "cancelled" event that finalizes the UI.
   // If the server no longer knows this scan, fall back to a local reset.
   const cancel = async () => {
-    if (!(await sendControl('cancel'))) reset();
+    if (!(await sendControl('cancel'))) {
+      reset();
+    }
   };
 
   const getFileKey = (file: CloudFile) =>
@@ -152,7 +164,9 @@ const removeFromGroups = (file: CloudFile) => {
 };
 
     const deleteFile = async (file: CloudFile) => {
-    if (!file.accountId) return false;
+    if (!file.accountId) {
+      return false;
+    }
 
     // 1. Snapshot previous state for a potential rollback (Optimistic Update Pattern)
     const previousGroups = [...groups];
@@ -176,8 +190,11 @@ const removeFromGroups = (file: CloudFile) => {
     let success = 0;
     let failed = 0;
     for (const file of filesToDelete) {
-      if (await deleteFile(file)) success++;
-      else failed++;
+      if (await deleteFile(file)) {
+        success++;
+      } else {
+        failed++;
+      }
     }
     setDeleting(false);
     return { success, failed };

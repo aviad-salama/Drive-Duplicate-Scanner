@@ -8,7 +8,9 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promis
       const error = err as { code?: number };
       const retryable = error?.code === 429 || (error?.code && error.code >= 500);
       
-      if (!retryable || attempt >= maxRetries) throw err;
+      if (!retryable || attempt >= maxRetries) {
+        throw err;
+      }
       
       const delay = 2 ** (attempt + 1) * 1000 + Math.floor(Math.random() * 1000);
       await new Promise((resolve) => setTimeout(resolve, delay));

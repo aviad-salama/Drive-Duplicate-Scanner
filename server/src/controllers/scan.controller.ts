@@ -116,10 +116,13 @@ export function controlScanHandler(req: Request, res: Response) {
   }
 
   const action = String(req.params['action']);
-  if (action === 'pause') control.pause();
-  else if (action === 'resume') control.resume();
-  else if (action === 'cancel') control.cancel();
-  else {
+  if (action === 'pause') {
+    control.pause();
+  } else if (action === 'resume') {
+    control.resume();
+  } else if (action === 'cancel') {
+    control.cancel();
+  } else {
     res.status(400).json({ error: 'Unknown action.' });
     return;
   }

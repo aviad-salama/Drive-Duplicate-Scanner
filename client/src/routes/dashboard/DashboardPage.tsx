@@ -14,9 +14,13 @@ import { usePriorityManager } from '../../hooks/usePriorityManager';
 import { connectUrl } from '../../services/cloudService';
 import type { CloudFile } from '../../types/cloud';
 import { ScanAllIcon } from '../../components/icons';
+import { Card } from '../../components/ui/Card';
+import { Title, Text } from '../../components/ui/Typography';
+import { Button } from '../../components/ui/Button';
+import { Alert } from '../../components/ui/Alert';
 
-const secondaryBtn =
-  'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 rounded-xl hover:bg-teal-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors';
+const secondaryLink =
+  'inline-flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -55,10 +59,10 @@ export default function DashboardPage() {
       {toast && <Toast message={toast} />}
       <div className="max-w-7xl mx-auto">
         
-        <header className="mb-8 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-6 rounded-2xl shadow-lg shadow-teal-950/5 dark:shadow-black/10 border border-gray-200 dark:border-slate-700 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between transition-colors">
+        <Card className="mb-8 flex flex-col gap-6 bg-white/90 dark:bg-slate-900/90 shadow-lg shadow-teal-950/5 backdrop-blur-sm dark:shadow-black/10 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 lg:flex-1">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">סורק הכפילויות</h1>
-            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">שלום {user?.name}</p>
+            <Title level={1} className="text-3xl text-gray-800 dark:text-white">סורק הכפילויות</Title>
+            <Text size="sm" variant="dimmed" className="mt-1">שלום {user?.name}</Text>
             <div className="mt-2 text-gray-800 dark:text-slate-300">
               <ScanStatus
                 scanning={scan.scanning}
@@ -89,7 +93,7 @@ export default function DashboardPage() {
                     setSelectedId(e.target.value);
                     scan.reset();
                   }}
-                  className="border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-xl px-3 py-2.5 text-sm"
+                  className="rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -97,59 +101,66 @@ export default function DashboardPage() {
                     </option>
                   ))}
                 </select>
-                <button
-                  className={secondaryBtn}
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="font-medium"
                   disabled={scan.scanning || isDisconnecting}
                   onClick={async () => {
-                    if (!activeId) return;
+                    if (!activeId) {
+                      return;
+                    }
                     await disconnect(activeId);
                     setSelectedId(null);
                     scan.reset();
                   }}
                 >
                   {isDisconnecting ? 'מנתק...' : 'נתק'}
-                </button>
+                </Button>
               </>
             )}
 
             {PROVIDERS.map((p) => (
-              <a key={p.id} href={connectUrl(p.id)} className={secondaryBtn}>
+              <a key={p.id} href={connectUrl(p.id)} className={secondaryLink}>
                 חבר {p.label}
               </a>
             ))}
 
             {accounts.length >= 2 && (
-              <button
+              <Button
+                variant="warning"
+                size="md"
                 onClick={scan.startScanAll}
                 disabled={scan.scanning}
-                className="bg-orange-500 text-white px-5 py-2.5 rounded-xl shadow-md shadow-orange-600/20 hover:bg-orange-600 font-semibold disabled:opacity-50 flex items-center gap-2 transition-colors"
+                className="bg-orange-500 shadow-md shadow-orange-600/20 hover:bg-orange-600"
               >
                 <ScanAllIcon className="w-5 h-5" />
                 {scan.scanning && scan.mode === 'all' ? 'סורק...' : 'סרוק הכל'}
-              </button>
+              </Button>
             )}
 
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={() => activeId && scan.startScan(activeId)}
               disabled={!activeId || scan.scanning}
-              className="bg-teal-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-600/20 hover:bg-teal-700 font-semibold disabled:opacity-50 transition-colors"
             >
               {scan.scanning && scan.mode === 'single' ? 'סורק...' : 'התחל סריקה'}
-            </button>
-            <button onClick={logout} className={secondaryBtn}>התנתק</button>
+            </Button>
+            <Button variant="secondary" onClick={logout}>התנתק</Button>
           </div>
-        </header>
+        </Card>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-xl mb-6 border border-red-100 dark:border-red-900/50 font-medium">
+          <Alert variant="error" className="mb-6 font-medium">
             {error}
-          </div>
+          </Alert>
         )}
 
         {!accountsLoading && accounts.length === 0 && (
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-gray-100 dark:border-slate-800 text-center text-gray-500 dark:text-slate-400">
+          <Card padding="lg" className="text-center text-gray-500 dark:text-slate-400">
             חבר ענן כדי להתחיל לסרוק כפילויות.
-          </div>
+          </Card>
         )}
 
         {scan.duplicateFilesCount > 0 && accounts.length > 1 && (

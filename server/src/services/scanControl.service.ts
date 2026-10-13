@@ -20,7 +20,9 @@ export class ScanControl {
   }
 
   pause() {
-    if (!this.cancelled) this.paused = true;
+    if (!this.cancelled) {
+      this.paused = true;
+    }
   }
 
   resume() {
@@ -39,7 +41,9 @@ export class ScanControl {
     while (this.paused && !this.cancelled) {
       await new Promise<void>((resolve) => this.waiters.push(resolve));
     }
-    if (this.cancelled) throw new ScanCancelledError();
+    if (this.cancelled) {
+      throw new ScanCancelledError();
+    }
   }
 
   private flush() {

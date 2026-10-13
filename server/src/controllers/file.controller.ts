@@ -17,15 +17,20 @@ export async function streamFileHandler(req: Request, res: Response) {
   res.status(status);
   for (const name of ['content-type', 'content-length', 'content-range']) {
     const value = headers[name];
-    if (value) res.setHeader(name, value);
+    if (value) {
+      res.setHeader(name, value);
+    }
   }
   res.setHeader('Accept-Ranges', 'bytes');
 
   req.on('close', () => stream.destroy());
   stream
     .on('error', () => {
-      if (!res.headersSent) res.status(500).end();
-      else res.end();
+      if (!res.headersSent) {
+        res.status(500).end();
+      } else {
+        res.end();
+      }
     })
     .pipe(res);
 }

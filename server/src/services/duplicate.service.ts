@@ -18,7 +18,9 @@ function buildNativeConnections(files: CloudFile[], sets: DisjointSet): void {
     const fileKey = getFileKey(file);
 
     for (const [algorithm, hash] of Object.entries(file.nativeHashes)) {
-      if (!hash) continue;
+      if (!hash) {
+        continue;
+      }
 
       const nativeKey = `${algorithm}:${hash}`;
       const owner = owners.get(nativeKey);
@@ -36,7 +38,9 @@ function buildSizeBuckets(files: CloudFile[]): Map<string, CloudFile[]> {
   const buckets = new Map<string, CloudFile[]>();
 
   for (const file of files) {
-    if (file.size === null) continue;
+    if (file.size === null) {
+      continue;
+    }
 
     const bucket = buckets.get(file.size);
 
@@ -51,7 +55,9 @@ function buildSizeBuckets(files: CloudFile[]): Map<string, CloudFile[]> {
 }
 
 function getCommonAlgorithms(files: CloudFile[]): Set<string> {
-  if (files.length === 0) return new Set();
+  if (files.length === 0) {
+    return new Set();
+  }
 
   let common = new Set(Object.keys(files[0]?.nativeHashes ?? {}));
 
@@ -59,7 +65,9 @@ function getCommonAlgorithms(files: CloudFile[]): Set<string> {
     const algorithms = new Set(Object.keys(file.nativeHashes));
     common = new Set([...common].filter((algorithm) => algorithms.has(algorithm)));
 
-    if (common.size === 0) break;
+    if (common.size === 0) {
+      break;
+    }
   }
 
   return common;
@@ -105,12 +113,16 @@ export async function findDuplicateGroups(
   const sizeBuckets = buildSizeBuckets(files);
 
   for (const bucket of sizeBuckets.values()) {
-    if (bucket.length < 2) continue;
+    if (bucket.length < 2) {
+      continue;
+    }
 
     const commonAlgorithms = getCommonAlgorithms(bucket);
 
     // Avoid downloading file contents when provider hashes can be compared.
-    if (commonAlgorithms.size > 0) continue;
+    if (commonAlgorithms.size > 0) {
+      continue;
+    }
 
     const representatives = new Map<FileKey, CloudFile>();
 

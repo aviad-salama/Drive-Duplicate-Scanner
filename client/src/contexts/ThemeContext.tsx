@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { Button } from '../components/ui/Button';
 
 type Theme = 'light' | 'dark';
 
@@ -49,21 +50,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within a ThemeProvider');
+  if (!ctx) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
   return ctx;
 }
 
 function ThemeToggleButton({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
+      size="sm"
       onClick={onToggle}
-      className="fixed bottom-5 right-5 z-50 flex items-center justify-center w-12 h-12 rounded-full
-             bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-800
-             text-teal-800 dark:text-teal-200 shadow-xl hover:scale-105 active:scale-95
-             transition-transform"
+      className="fixed bottom-5 right-5 z-50 h-12 w-12 rounded-full border-teal-200 p-0 text-teal-800 shadow-xl hover:scale-105 active:scale-95 dark:border-teal-800 dark:text-teal-200"
     >
       {theme === 'dark' ? '☀️' : '🌙'}
-    </button>
+    </Button>
   );
 }

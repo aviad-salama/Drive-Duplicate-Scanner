@@ -21,7 +21,9 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
     let bestPriority = Infinity;
 
     groupFiles.forEach((file) => {
-      if (!file.accountId) return;
+      if (!file.accountId) {
+        return;
+      }
       const prioIndex = priorityOrder.indexOf(file.accountId);
       if (prioIndex !== -1 && prioIndex < bestPriority) {
         bestPriority = prioIndex;

@@ -75,7 +75,9 @@ export async function runMultiAccountScan(
       }
     }
   } catch (error) {
-    if (!(error instanceof ScanCancelledError)) throw error;
+    if (!(error instanceof ScanCancelledError)) {
+      throw error;
+    }
     cancelled = true;
   }
 
@@ -97,7 +99,9 @@ export async function runMultiAccountScan(
     const cacheKey = `${file.accountId ?? ''}:${file.id}`;
     const cached = sha256Cache.get(cacheKey);
 
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     if (!file.accountId) {
       throw new Error(`Missing account ID for file ${file.id}`);
