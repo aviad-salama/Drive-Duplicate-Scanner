@@ -1,4 +1,5 @@
 import { Text } from './ui/Typography';
+import { he } from '../languages/he';
 
 interface Props {
   path: string | null;
@@ -22,7 +23,7 @@ export default function Breadcrumbs({ path }: Props) {
   return (
     <div className="mt-2 w-full">
       <Text size="xs" variant="dimmed" className="mb-1 font-semibold">
-        מיקום:
+        {he.files.location}
       </Text>
 
       <Text

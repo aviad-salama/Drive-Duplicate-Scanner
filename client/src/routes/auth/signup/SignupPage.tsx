@@ -6,6 +6,7 @@ import type { SignupFormData } from '../../../types/auth';
 import { Title, Text } from '../../../components/ui/Typography';
 import { Button } from '../../../components/ui/Button';
 import { Alert } from '../../../components/ui/Alert';
+import { he } from '../../../languages/he';
 
 export default function SignupPage() {
   const { register: registerUser } = useAuth();
@@ -26,7 +27,7 @@ export default function SignupPage() {
       await registerUser(data.name, data.email, data.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בהרשמה');
+      setError(err instanceof Error ? err.message : he.auth.signupError);
     } finally {
       setBusy(false);
     }
@@ -34,14 +35,14 @@ export default function SignupPage() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <Title level={1} className="text-2xl">הרשמה</Title>
+      <Title level={1} className="text-2xl">{he.auth.signup}</Title>
       
       {error && <Alert variant="error" className="p-3 text-sm">{error}</Alert>}
       
       <div className="flex flex-col gap-1">
         <input 
           className="form-input" 
-          placeholder="שם מלא" 
+          placeholder={he.auth.fullName}
           {...register('name', { required: 'Full name is required' })} 
         />
         {errors.name && <Text as="span" variant="danger" size="sm" className="px-1">{errors.name.message}</Text>}
@@ -51,7 +52,7 @@ export default function SignupPage() {
         <input 
           className="form-input" 
           type="email" 
-          placeholder="אימייל" 
+          placeholder={he.auth.email}
           {...register('email', { required: 'Email is required' })} 
         />
         {errors.email && <Text as="span" variant="danger" size="sm" className="px-1">{errors.email.message}</Text>}
@@ -61,7 +62,7 @@ export default function SignupPage() {
         <input 
           className="form-input" 
           type="password" 
-          placeholder="סיסמה (לפחות 8 תווים)" 
+          placeholder={he.auth.passwordHint}
           {...register('password', { 
             required: 'Password is required',
             minLength: { value: 8, message: 'Password must be at least 8 characters' }
@@ -71,11 +72,11 @@ export default function SignupPage() {
       </div>
 
       <Button type="submit" disabled={busy} className="mt-2 w-full">
-        {busy ? 'נרשם...' : 'צור חשבון'}
+        {busy ? he.auth.signupBusy : he.auth.signupSubmit}
       </Button>
       
       <Text size="sm" variant="dimmed">
-        כבר יש לך חשבון? <Link to="/login" className="text-teal-700 dark:text-teal-300 font-semibold">התחבר</Link>
+        {he.auth.alreadyHaveAccount} <Link to="/login" className="text-teal-700 dark:text-teal-300 font-semibold">{he.auth.loginLink}</Link>
       </Text>
     </form>
   );

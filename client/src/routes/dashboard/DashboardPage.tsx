@@ -18,6 +18,7 @@ import { Card } from '../../components/ui/Card';
 import { Title, Text } from '../../components/ui/Typography';
 import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
+import { he } from '../../languages/he';
 
 const secondaryLink =
   'inline-flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors';
@@ -41,21 +42,21 @@ export default function DashboardPage() {
 
   const handleDeleteOne = async (file: CloudFile) => {
     const ok = await scan.deleteFile(file);
-    showToast(ok ? `הקובץ ${file.name} הועבר לאשפה` : 'שגיאה במחיקת הקובץ');
+    showToast(ok ? he.errors.deleteSuccess(file.name) : he.errors.deleteFile);
   };
 
   const handleBulkDelete = async () => {
     const filesToDelete = priorityManager.getFilesToDelete();
-    if (!window.confirm(`להעביר לאשפה ${filesToDelete.length} קבצים כפולים לפי התעדוף שהגדרת?`)) {
+    if (!window.confirm(he.actions.confirmBulkDelete(filesToDelete.length))) {
       return;
     }
     
     const { success, failed } = await scan.deleteDuplicates(filesToDelete);
-    const failedMessage = failed > 0 ? ` נכשלו ${failed}.` : '';
-    showToast(`הועברו לאשפה ${success} קבצים.${failedMessage}`);
+    const failedMessage = failed > 0 ? he.scan.failedItems(failed) : '';
+    showToast(he.scan.bulkDeleteSuccess(success, failedMessage));
   };
 
-  const error = scan.error || (params.get('error') ? 'חיבור הענן נכשל, נסה שוב.' : '');
+  const error = scan.error || (params.get('error') ? he.errors.cloudConnection : '');
 
   return (
     <div className="min-h-screen bg-transparent p-8 text-right" dir="rtl">
@@ -64,8 +65,8 @@ export default function DashboardPage() {
         
         <Card className="mb-8 flex flex-col gap-6 bg-white/90 dark:bg-slate-900/90 shadow-lg shadow-teal-950/5 backdrop-blur-sm dark:shadow-black/10 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 lg:flex-1">
-            <Title level={1} className="text-3xl text-gray-800 dark:text-white">סורק הכפילויות</Title>
-            <Text size="sm" variant="dimmed" className="mt-1">שלום {user?.name}</Text>
+            <Title level={1} className="text-3xl text-gray-800 dark:text-white">{he.dashboard.title}</Title>
+            <Text size="sm" variant="dimmed" className="mt-1">{he.dashboard.greeting(user?.name)}</Text>
             <div className="mt-2 text-gray-800 dark:text-slate-300">
               <ScanStatus
                 scanning={scan.scanning}
@@ -118,14 +119,14 @@ export default function DashboardPage() {
                     scan.reset();
                   }}
                 >
-                  {isDisconnecting ? 'מנתק...' : 'נתק'}
+                  {isDisconnecting ? he.dashboard.disconnecting : he.dashboard.disconnect}
                 </Button>
               </>
             )}
 
             {PROVIDERS.map((p) => (
               <a key={p.id} href={connectUrl(p.id)} className={secondaryLink}>
-                חבר {p.label}
+                {he.dashboard.connectProvider(p.label)}
               </a>
             ))}
 
@@ -138,7 +139,7 @@ export default function DashboardPage() {
                 className="bg-orange-500 shadow-md shadow-orange-600/20 hover:bg-orange-600"
               >
                 <ScanAllIcon className="w-5 h-5" />
-                {scan.scanning && scan.mode === 'all' ? 'סורק...' : 'סרוק הכל'}
+                {scan.scanning && scan.mode === 'all' ? he.scan.scanning : he.scan.scanAll}
               </Button>
             )}
 
@@ -148,9 +149,9 @@ export default function DashboardPage() {
               onClick={() => activeId && scan.startScan(activeId)}
               disabled={!activeId || scan.scanning}
             >
-              {scan.scanning && scan.mode === 'single' ? 'סורק...' : 'התחל סריקה'}
+              {scan.scanning && scan.mode === 'single' ? he.scan.scanning : he.scan.start}
             </Button>
-            <Button variant="secondary" onClick={logout}>התנתק</Button>
+            <Button variant="secondary" onClick={logout}>{he.dashboard.logout}</Button>
           </div>
         </Card>
 
@@ -162,7 +163,7 @@ export default function DashboardPage() {
 
         {!accountsLoading && accounts.length === 0 && (
           <Card padding="lg" className="text-center text-gray-500 dark:text-slate-400">
-            חבר ענן כדי להתחיל לסרוק כפילויות.
+            {he.dashboard.noAccounts}
           </Card>
         )}
 

@@ -8,6 +8,7 @@ import {
   type ScanAction,
 } from '../services/cloudService';
 import type { CloudFile, DuplicateGroup } from '../types/cloud';
+import { he } from '../languages/he';
 
 export type ScanMode = 'single' | 'all';
 
@@ -104,7 +105,7 @@ export function useScan() {
     };
 
     es.onerror = () => {
-      setError('שגיאת חיבור לשרת. נסה להתחבר מחדש.');
+      setError(he.errors.scanConnection);
       setScanning(false);
       setPaused(false);
       es.close();

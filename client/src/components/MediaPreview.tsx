@@ -3,6 +3,7 @@ import { streamUrl, thumbnailUrl } from '../services/cloudService';
 import type { CloudFile } from '../types/cloud';
 import { MissingVideoIcon, MissingImageIcon } from './icons';
 import { Text } from './ui/Typography';
+import { he } from '../languages/he';
 
 interface Props {
   file: CloudFile;
@@ -33,7 +34,7 @@ export default function MediaPreview({ file, isVideo, accountId }: Props) {
           <MissingImageIcon className="w-12 h-12" />
         )}
         <Text as="span" size="sm" className="font-medium">
-          {isVideo ? 'וידאו חסר תצוגה' : 'אין תצוגה מקדימה'}
+          {isVideo ? he.files.missingVideo : he.files.noPreview}
         </Text>
       </div>
     );

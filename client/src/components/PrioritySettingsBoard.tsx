@@ -5,6 +5,7 @@ import { Card } from './ui/Card';
 import { Title, Text } from './ui/Typography';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
+import { he } from '../languages/he';
 
 interface Props {
   priorityOrder: string[];
@@ -21,10 +22,10 @@ export default function PrioritySettingsBoard({ priorityOrder, accounts, savings
   return (
     <Card className="mb-8 bg-white/90 dark:bg-slate-900/90 border-orange-200 dark:border-orange-900/50">
       <Title level={3} className="mb-4 text-lg text-orange-800 dark:text-orange-300">
-        תעדוף כוננים לשמירת קבצים מרובים
+        {he.priority.title}
       </Title>
       <Text size="sm" className="mb-4 text-gray-600 dark:text-slate-400">
-        קבע איזה דרייב יקבל עדיפות. כשימצא קובץ כפול, המערכת תשמור אותו בדרייב שנמצא גבוה יותר ברשימה זו, ותמחק אותו מהשאר (על פי החישוב הזה, כך יראה החיסכון הכולל שלך).
+        {he.priority.description}
       </Text>
       <div className="flex flex-col gap-3">
         {priorityOrder.map((id, index) => {
@@ -38,7 +39,7 @@ export default function PrioritySettingsBoard({ priorityOrder, accounts, savings
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                 {index + 1}. {providerLabel(acc.provider)} <span className="opacity-75">({acc.accountEmail})</span>
                 <Badge variant="success" className="mr-6">
-                  פוטנציאל פינוי מקום: {formatBytes(savedBytes.toString())}
+                  {he.priority.spacePotential(formatBytes(savedBytes.toString()))}
                 </Badge>
               </span>
               <div className="flex gap-1 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -48,7 +49,7 @@ export default function PrioritySettingsBoard({ priorityOrder, accounts, savings
                   disabled={index === 0}
                   onClick={() => movePriority(index, 'up')}
                   className="rounded-none p-2 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-20 dark:text-slate-300"
-                  title="הזז למעלה"
+                  title={he.priority.moveUp}
                 >
                   ▲
                 </Button>
@@ -58,7 +59,7 @@ export default function PrioritySettingsBoard({ priorityOrder, accounts, savings
                   disabled={index === priorityOrder.length - 1}
                   onClick={() => movePriority(index, 'down')}
                   className="rounded-none p-2 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-20 dark:text-slate-300"
-                  title="הזז למטה"
+                  title={he.priority.moveDown}
                 >
                   ▼
                 </Button>

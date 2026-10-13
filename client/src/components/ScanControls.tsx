@@ -1,5 +1,6 @@
 import { PlayIcon, PauseIcon, CancelIcon } from './icons';
 import { Button } from './ui/Button';
+import { he } from '../languages/he';
 interface Props {
   paused: boolean;
   onPause: () => void;
@@ -17,7 +18,7 @@ export default function ScanControls({ paused, onPause, onResume, onCancel }: Pr
           onClick={onResume}
         >
           <PlayIcon className="w-4 h-4" />
-          המשך
+          {he.actions.continue}
         </Button>
       ) : (
         <Button
@@ -26,7 +27,7 @@ export default function ScanControls({ paused, onPause, onResume, onCancel }: Pr
           onClick={onPause}
         >
           <PauseIcon className="w-4 h-4" />
-          השהה
+          {he.actions.pause}
         </Button>
       )}
       <Button
@@ -36,7 +37,7 @@ export default function ScanControls({ paused, onPause, onResume, onCancel }: Pr
         className="bg-red-50 text-red-600 shadow-none hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
       >
         <CancelIcon className="w-4 h-4" />
-        בטל סריקה
+        {he.actions.cancelScan}
       </Button>
     </div>
   );

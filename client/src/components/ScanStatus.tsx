@@ -1,5 +1,6 @@
 import { PauseIcon, SpinnerIcon } from './icons';
 import { Text } from './ui/Typography';
+import { he } from '../languages/he';
 interface Props {
   scanning: boolean;
   paused: boolean;
@@ -19,12 +20,12 @@ export default function ScanStatus({
   groupsCount,
   currentAccount,
 }: Props) {
-  let idleMessage = 'מצא קבצים כפולים שמבזבזים לך מקום';
+  let idleMessage = he.scan.idle;
 
   if (cancelled) {
-    idleMessage = `הסריקה בוטלה. נסרקו ${displayScanned} קבצים, נמצאו ${groupsCount} סטים כפולים עד כה.`;
+    idleMessage = he.scan.cancelled(displayScanned, groupsCount);
   } else if (displayScanned > 0) {
-    idleMessage = `נסרקו ${displayScanned} קבצים. נמצאו ${groupsCount} סטים כפולים.`;
+    idleMessage = he.scan.completed(displayScanned, groupsCount);
   }
 
   if (scanning) {
@@ -39,14 +40,14 @@ export default function ScanStatus({
             <SpinnerIcon className="animate-spin h-5 w-5" />
           )}
           <span>
-            {paused ? 'הסריקה מושהית' : 'סורק עכשיו...'} נסרקו {displayScanned} קבצים
+            {paused ? he.scan.paused : he.scan.running} {he.scan.scanned(displayScanned)}
           </span>
         </div>
         {currentAccount && (
-          <Text size="sm" variant="dimmed" className="mr-8">חשבון נוכחי: {currentAccount}</Text>
+          <Text size="sm" variant="dimmed" className="mr-8">{he.scan.currentAccount(currentAccount)}</Text>
         )}
         <Text as="div" size="sm" variant="danger" className="mr-8 font-semibold">
-          נמצאו עד כה {liveDuplicates} סטים של כפילויות!
+          {he.scan.duplicatesFound(liveDuplicates)}
         </Text>
       </div>
     );

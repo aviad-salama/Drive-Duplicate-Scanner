@@ -8,6 +8,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Text } from './ui/Typography';
 import { Card } from './ui/Card';
+import { he } from '../languages/he';
 
 interface Props {
   file: CloudFile;
@@ -46,13 +47,13 @@ export default function FileCard({
     >
       {isRecommendedKeep && (
         <Badge variant="success" className="absolute -top-3 right-4 z-10 rounded-full bg-emerald-500 px-3 py-1 text-white shadow-sm">
-          יישמר (מועדף)
+          {he.files.kept}
         </Badge>
       )}
 
       {isRecommendedDelete && (
         <Badge variant="danger" className="absolute -top-3 right-4 z-10 rounded-full bg-red-500 px-3 py-1 text-white shadow-sm">
-          יימחק (לפי תעדוף)
+          {he.files.deletedByPriority}
         </Badge>
       )}
 
@@ -114,7 +115,7 @@ export default function FileCard({
         onClick={() => onDelete(file)}
         className={deleteButtonClasses}
       >
-        מחק קובץ זה
+        {he.actions.deleteFile}
       </Button>
     </Card>
   );

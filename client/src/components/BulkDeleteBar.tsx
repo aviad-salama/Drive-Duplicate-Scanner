@@ -2,6 +2,7 @@ import { TrashIcon } from './icons';
 import { Title, Text } from './ui/Typography';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { he } from '../languages/he';
 
 interface Props {
   count: number;
@@ -13,9 +14,9 @@ export default function BulkDeleteBar({ count, disabled, onClick }: Props) {
   return (
     <Card className="flex justify-between items-center flex-wrap gap-4">
       <div>
-        <Title level={3}>פעולות מהירות</Title>
+        <Title level={3}>{he.actions.quickActions}</Title>
         <Text variant="dimmed" size="sm">
-          נמצאו {count} קבצים כפולים שניתן להעביר לאשפה בבת אחת.
+          {he.actions.bulkDeleteDescription(count)}
         </Text>
       </div>
       
@@ -26,7 +27,7 @@ export default function BulkDeleteBar({ count, disabled, onClick }: Props) {
         disabled={disabled}
       >
         <TrashIcon className="w-5 h-5" />
-        מחק הכל ({count} קבצים)
+        {he.actions.deleteAll(count)}
       </Button>
     </Card>
   );

@@ -6,6 +6,7 @@ import type { LoginFormData } from '../../../types/auth';
 import { Title, Text } from '../../../components/ui/Typography';
 import { Button } from '../../../components/ui/Button';
 import { Alert } from '../../../components/ui/Alert';
+import { he } from '../../../languages/he';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -26,7 +27,7 @@ export default function LoginPage() {
       await login(data.email, data.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בהתחברות');
+      setError(err instanceof Error ? err.message : he.auth.loginError);
     } finally {
       setBusy(false);
     }
@@ -34,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <Title level={1} className="text-2xl">התחברות</Title>
+      <Title level={1} className="text-2xl">{he.auth.login}</Title>
       
       {error && <Alert variant="error" className="p-3 text-sm">{error}</Alert>}
       
@@ -42,7 +43,7 @@ export default function LoginPage() {
         <input 
           className="form-input" 
           type="email" 
-          placeholder="אימייל" 
+          placeholder={he.auth.email}
           {...register('email', { required: 'Email is required' })} 
         />
         {errors.email && <Text as="span" variant="danger" size="sm" className="px-1">{errors.email.message}</Text>}
@@ -52,18 +53,18 @@ export default function LoginPage() {
         <input 
           className="form-input" 
           type="password" 
-          placeholder="סיסמה" 
+          placeholder={he.auth.password}
           {...register('password', { required: 'Password is required' })} 
         />
         {errors.password && <Text as="span" variant="danger" size="sm" className="px-1">{errors.password.message}</Text>}
       </div>
 
       <Button type="submit" disabled={busy} className="mt-2 w-full">
-        {busy ? 'מתחבר...' : 'התחבר'}
+        {busy ? he.auth.loginBusy : he.auth.loginSubmit}
       </Button>
       
       <Text size="sm" variant="dimmed">
-        אין לך חשבון? <Link to="/signup" className="text-teal-700 dark:text-teal-300 font-semibold">הרשם</Link>
+        {he.auth.noAccount} <Link to="/signup" className="text-teal-700 dark:text-teal-300 font-semibold">{he.auth.register}</Link>
       </Text>
     </form>
   );
