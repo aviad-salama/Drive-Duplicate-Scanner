@@ -1,5 +1,6 @@
 import { API_URL } from '../config/api';
 import type { CloudAccount } from '../types/cloud';
+import { ScanAction } from '../types/scan';
 import { api } from './apiClient';
 
 const accountBase = (accountId: string) => `${API_URL}/api/accounts/${accountId}`;
@@ -22,8 +23,6 @@ export const deleteFile = (accountId: string, fileId: string) =>
   api<{ success: boolean }>(`/accounts/${accountId}/files/${fileId}`, { method: 'DELETE' });
 
 export const scanAllUrl = () => `${API_URL}/api/cloud/scan-all`;
-
-export type ScanAction = 'pause' | 'resume' | 'cancel';
 
 export const controlScan = (scanId: string, action: ScanAction) =>
   api<{ success: boolean }>(`/cloud/scans/${scanId}/${action}`, { method: 'POST' });

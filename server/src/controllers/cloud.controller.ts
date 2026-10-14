@@ -7,6 +7,12 @@ import {
   listCloudAccounts,
   saveCloudAccount,
 } from '../services/cloudAccount.service.js';
+import { z } from 'zod';
+
+const callbackQuerySchema = z.object({
+  code: z.string(),
+  state: z.string(),
+});
 
 // Step 1: The user clicks "Connect cloud" and is redirected to the provider's authorization page.
 export function connectHandler(req: Request, res: Response) {
@@ -20,11 +26,15 @@ export async function callbackHandler(req: Request, res: Response) {
   const dashboard = `${env.CLIENT_URL}/dashboard`;
   try {
     const provider = getProvider(String(req.params['provider']));
-    const { code, state } = req.query;
-    if (typeof code !== 'string' || typeof state !== 'string') {
+    
+    const result = callbackQuerySchema.safeParse(req.query);
+    if (!result.success) {
       res.redirect(`${dashboard}?error=connect_failed`);
       return;
     }
+    
+    const { code, state } = result.data;
+    
     const { userId, provider: stateProvider } = verifyOAuthState(state);
     if (stateProvider !== provider.id) {
       res.redirect(`${dashboard}?error=connect_failed`);

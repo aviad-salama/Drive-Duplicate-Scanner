@@ -20,7 +20,7 @@ export default function ScanStatus({
   groupsCount,
   currentAccount,
 }: Props) {
-  let idleMessage = he.scan.idle;
+  let idleMessage: string = he.scan.idle;
 
   if (cancelled) {
     idleMessage = he.scan.cancelled(displayScanned, groupsCount);

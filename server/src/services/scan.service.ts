@@ -8,6 +8,7 @@ import {
   findDuplicateGroups,
 } from './duplicate.service.js';
 import { ScanCancelledError, type ScanControl } from './scanControl.service.js';
+import { ScanStatus } from '../types/scan.js';
 
 export interface ScanProgress {
   scannedCount: number;
@@ -28,7 +29,7 @@ export const createScan = (userId: string, cloudAccountId: string) =>
 
 export const finishScan = (
   id: string,
-  status: 'COMPLETED' | 'FAILED',
+  status: ScanStatus,
   totalScanned = 0,
   duplicateGroups = 0,
 ) =>

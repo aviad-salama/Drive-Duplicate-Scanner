@@ -2,7 +2,7 @@ import { useDuplicateGroups } from './useDuplicateGroups';
 import { useScanSession } from './useScanSession';
 import type { DuplicateGroup } from '../types/cloud';
 
-export type { ScanMode } from './useScanSession';
+export { ScanMode } from '../types/scan';
 
 /** Composes scan-session state with duplicate-group and deletion state. */
 export function useScan() {

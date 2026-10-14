@@ -3,34 +3,34 @@ import { prisma } from '../config/prisma.js';
 import { getCloudAccountForUser } from '../services/cloudAccount.service.js';
 import { createScan, finishScan, runMultiAccountScan } from '../services/scan.service.js';
 import { getScanControl, registerScan, unregisterScan } from '../services/scanControl.service.js';
+import { ScanAction, ScanEventType, ScanStatus } from '../types/scan.js';
+import {z} from 'zod';
 
-interface ScanErrorDetails {
-  name?: unknown;
-  code?: unknown;
-  status?: unknown;
-  response?: { data?: { error?: unknown } };
-}
+const scanErrorSchema = z.object({
+  name: z.string().optional(),
+  code: z.union([z.string(), z.number()]).optional(),
+  status: z.number().optional(),
+  response: z.object({
+    data: z.object({
+      error: z.string().optional(),
+    }).optional(),
+  }).optional(),
+});
 
 function getSafeScanError(error: unknown) {
   if (!error || typeof error !== 'object') {
     return { name: 'UnknownError' };
   }
 
-  const details = error as ScanErrorDetails;
-  const name = typeof details.name === 'string' ? details.name : 'UnknownError';
-  const code = typeof details.code === 'string' || typeof details.code === 'number'
-    ? details.code
-    : undefined;
-  const status = typeof details.status === 'number' ? details.status : undefined;
-  const providerError = typeof details.response?.data?.error === 'string'
-    ? details.response.data.error
-    : undefined;
+  const result = scanErrorSchema.safeParse(error);
+  
+  const details = result.success ? result.data : {};
 
   return {
-    name,
-    code,
-    status,
-    providerError,
+    name: details.name ?? 'UnknownError',
+    code: details.code,
+    status: details.status,
+    providerError: details.response?.data?.error,
   };
 }
 
@@ -66,22 +66,22 @@ export async function scanHandler(req: Request, res: Response) {
   const control = registerScan(userId);
   // Stop the work if the browser disconnects (closed tab, reset, etc.).
   res.on('close', () => control.cancel());
-  send({ type: 'started', scanId: control.id });
+  send({ type: ScanEventType.Started, scanId: control.id });
 
   const scan = await createScan(userId, account.id);
   try {
     const result = await runMultiAccountScan(
       [account],
-      (p) => send({ type: 'progress', ...p }),
+      (p) => send({ type: ScanEventType.Progress, ...p }),
       control,
     );
     // A cancelled scan is stored as COMPLETED with its partial counts.
-    await finishScan(scan.id, 'COMPLETED', result.totalScanned, result.duplicateGroups.length);
-    send({ type: result.cancelled ? 'cancelled' : 'complete', ...result });
+    await finishScan(scan.id, ScanStatus.COMPLETED, result.totalScanned, result.duplicateGroups.length);
+    send({ type: result.cancelled ? ScanEventType.Cancelled : ScanEventType.Complete, ...result });
   } catch (error) {
     console.error('Scan failed:', getSafeScanError(error));
-    await finishScan(scan.id, 'FAILED');
-    send({ type: 'error', message: getScanFailureMessage(error, 'Failed to scan drive') });
+    await finishScan(scan.id, ScanStatus.FAILED);
+    send({ type: ScanEventType.Error, message: getScanFailureMessage(error, 'Failed to scan drive') });
   } finally {
     unregisterScan(control.id);
     res.end();
@@ -94,24 +94,24 @@ export async function scanAllHandler(req: Request, res: Response) {
   const send = openEventStream(res);
   const control = registerScan(userId);
   res.on('close', () => control.cancel());
-  send({ type: 'started', scanId: control.id });
+  send({ type: ScanEventType.Started, scanId: control.id });
 
   try {
     const accounts = await prisma.cloudAccount.findMany({ where: { userId } });
     if (accounts.length === 0) {
-      send({ type: 'error', message: 'No connected accounts found' });
+      send({ type: ScanEventType.Error, message: 'No connected accounts found' });
       return;
     }
 
     const result = await runMultiAccountScan(
       accounts,
-      (p) => send({ type: 'progress', ...p }),
+      (p) => send({ type: ScanEventType.Progress, ...p }),
       control,
     );
-    send({ type: result.cancelled ? 'cancelled' : 'complete', ...result });
+    send({ type: result.cancelled ? ScanEventType.Cancelled : ScanEventType.Complete, ...result });
   } catch (error) {
     console.error('Scan all failed:', getSafeScanError(error));
-    send({ type: 'error', message: getScanFailureMessage(error, 'Failed to scan all drives') });
+    send({ type: ScanEventType.Error, message: getScanFailureMessage(error, 'Failed to scan all drives') });
   } finally {
     unregisterScan(control.id);
     res.end();
@@ -127,11 +127,11 @@ export function controlScanHandler(req: Request, res: Response) {
   }
 
   const action = String(req.params['action']);
-  if (action === 'pause') {
+  if (action === ScanAction.Pause) {
     control.pause();
-  } else if (action === 'resume') {
+  } else if (action === ScanAction.Resume) {
     control.resume();
-  } else if (action === 'cancel') {
+  } else if (action === ScanAction.Cancel) {
     control.cancel();
   } else {
     res.status(400).json({ error: 'Unknown action.' });

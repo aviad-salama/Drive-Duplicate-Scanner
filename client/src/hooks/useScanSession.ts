@@ -4,12 +4,10 @@ import {
   controlScan,
   scanAllUrl,
   scanUrl,
-  type ScanAction,
 } from '../services/cloudService';
 import type { DuplicateGroup } from '../types/cloud';
 import { he } from '../languages/he';
-
-export type ScanMode = 'single' | 'all';
+import { ScanAction, ScanEventType, ScanMode } from '../types/scan';
 
 type ScanResult = {
   duplicateGroups: DuplicateGroup[];
@@ -27,7 +25,7 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
     scanning: false,
     paused: false,
     cancelled: false,
-    mode: 'single' as ScanMode,
+    mode: ScanMode.Single,
     currentAccount: '',
     error: '',
     targetScanned: 0,
@@ -64,7 +62,7 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
       scanning: false,
       paused: false,
       cancelled: false,
-      mode: 'single',
+      mode: ScanMode.Single,
       currentAccount: '',
       error: '',
       targetScanned: 0,
@@ -97,20 +95,20 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
     // The server sends a started event first, then progress and one terminal event.
     es.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'started') {
+      if (data.type === ScanEventType.Started) {
         scanIdRef.current = data.scanId;
-      } else if (data.type === 'progress') {
+      } else if (data.type === ScanEventType.Progress) {
         setScanState((prev) => ({
           ...prev,
           targetScanned: data.scannedCount,
           liveDuplicates: data.duplicatesCount,
           currentAccount: `${providerLabel(data.currentProvider)} – ${data.currentAccount}`,
         }));
-      } else if (data.type === 'complete') {
+      } else if (data.type === ScanEventType.Complete) {
         finish(data, false);
-      } else if (data.type === 'cancelled') {
+      } else if (data.type === ScanEventType.Cancelled) {
         finish(data, true);
-      } else if (data.type === 'error') {
+      } else if (data.type === ScanEventType.Error) {
         setScanState((prev) => ({ ...prev, error: data.message, scanning: false, paused: false }));
         es.close();
       }
@@ -122,8 +120,8 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
     };
   };
 
-  const startScan = (accountId: string) => run(scanUrl(accountId), 'single');
-  const startScanAll = () => run(scanAllUrl(), 'all');
+  const startScan = (accountId: string) => run(scanUrl(accountId), ScanMode.Single);
+  const startScanAll = () => run(scanAllUrl(), ScanMode.All);
 
   const sendControl = async (action: ScanAction) => {
     const id = scanIdRef.current;
@@ -139,13 +137,13 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
   };
 
   const pause = async () => {
-    if (await sendControl('pause')) {
+    if (await sendControl(ScanAction.Pause)) {
       setScanState((prev) => ({ ...prev, paused: true }));
     }
   };
 
   const resume = async () => {
-    if (await sendControl('resume')) {
+    if (await sendControl(ScanAction.Resume)) {
       setScanState((prev) => ({ ...prev, paused: false }));
     }
   };
@@ -153,7 +151,7 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
   // The server answers with a "cancelled" event that finalizes the UI.
   // If the server no longer knows this scan, fall back to a local reset.
   const cancel = async () => {
-    if (!(await sendControl('cancel'))) {
+    if (!(await sendControl(ScanAction.Cancel))) {
       reset();
     }
   };
