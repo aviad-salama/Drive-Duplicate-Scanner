@@ -9,6 +9,7 @@ import {
 } from './duplicate.service.js';
 import { ScanCancelledError, type ScanControl } from './scanControl.service.js';
 import { ScanStatus } from '../types/scan.js';
+import { isSafeFile } from '../utils/fileFilter.js';
 
 export interface ScanProgress {
   scannedCount: number;
@@ -43,7 +44,6 @@ export async function runMultiAccountScan(
   onProgress: (progress: ScanProgress) => void,
   control: ScanControl,
 ) {
-  // List every account before grouping so duplicates can span connected accounts.
   const allFiles: CloudFile[] = [];
   let scannedCount = 0;
   let cancelled = false;
@@ -54,10 +54,11 @@ export async function runMultiAccountScan(
       const refreshToken = decrypt(acc.refreshTokenEnc);
 
       for await (const page of provider.listFiles(refreshToken)) {
-        // Pause and cancellation take effect between provider pages, not mid-request.
         await control.checkpoint();
 
-        const decorated = page.map((file) => ({
+        const safeFiles = page.filter(isSafeFile);
+
+        const decorated = safeFiles.map((file) => ({
           ...file,
           accountId: acc.id,
           accountEmail: acc.accountEmail,
