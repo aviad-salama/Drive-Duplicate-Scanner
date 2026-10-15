@@ -10,20 +10,17 @@ export function useDuplicateGroups() {
   const resetGroups = () => setGroups([]);
   const replaceGroups = (nextGroups: DuplicateGroup[]) => setGroups(nextGroups);
 
-  const getFileKey = (file: CloudFile) =>
-    `${file.accountId ?? ''}:${file.id}`;
+  const getFileKey = (file: CloudFile) => `${file.accountId ?? ''}:${file.id}`;
 
   const removeFromGroups = (file: CloudFile) => {
     const targetKey = getFileKey(file);
 
-    setGroups((prev) =>
-      prev
-        .map((group) => ({
-          ...group,
-          files: group.files.filter((current) => getFileKey(current) !== targetKey),
-        }))
-        .filter((group) => group.files.length > 1),
-    );
+    setGroups((prev) => prev
+      .map((group) => ({
+        ...group,
+        files: group.files.filter((current) => getFileKey(current) !== targetKey),
+      }))
+      .filter((group) => group.files.length > 1));
   };
 
   const deleteFile = async (file: CloudFile) => {

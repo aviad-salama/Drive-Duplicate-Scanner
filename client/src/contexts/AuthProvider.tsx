@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as authService from '../services/authService';
 import type { User } from '../types/auth';
@@ -21,26 +21,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: Infinity, // Keep user data fresh during the entire session
   });
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const fetchedUser = await authService.login(email, password);
     // Update the cache immediately to trigger a re-render
     queryClient.setQueryData(['authUser'], fetchedUser);
-  };
+  }, [queryClient]);
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = useCallback(async (name: string, email: string, password: string) => {
     const fetchedUser = await authService.register(name, email, password);
     queryClient.setQueryData(['authUser'], fetchedUser);
-  };
+  }, [queryClient]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await authService.logout();
     // Clear user from cache and clear all other queries to prevent data leaks
     queryClient.setQueryData(['authUser'], null);
     queryClient.clear();
-  };
+  }, [queryClient]);
+
+  const contextValue = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      logout,
+    }),
+    [user, loading, login, register, logout],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

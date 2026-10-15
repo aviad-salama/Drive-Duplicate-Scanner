@@ -36,25 +36,25 @@ export default function LoginPage() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <Title level={1} className="text-2xl">{he.auth.login}</Title>
-      
+
       {error && <Alert variant="error" className="p-3 text-sm">{error}</Alert>}
-      
+
       <div className="flex flex-col gap-1">
-        <input 
-          className="form-input" 
-          type="email" 
+        <input
+          className="form-input"
+          type="email"
           placeholder={he.auth.email}
-          {...register('email', { required: 'Email is required' })} 
+          {...register('email', { required: 'Email is required' })}
         />
         {errors.email && <Text as="span" variant="danger" size="sm" className="px-1">{errors.email.message}</Text>}
       </div>
 
       <div className="flex flex-col gap-1">
-        <input 
-          className="form-input" 
-          type="password" 
+        <input
+          className="form-input"
+          type="password"
           placeholder={he.auth.password}
-          {...register('password', { required: 'Password is required' })} 
+          {...register('password', { required: 'Password is required' })}
         />
         {errors.password && <Text as="span" variant="danger" size="sm" className="px-1">{errors.password.message}</Text>}
       </div>
@@ -62,7 +62,7 @@ export default function LoginPage() {
       <Button type="submit" disabled={busy} className="mt-2 w-full">
         {busy ? he.auth.loginBusy : he.auth.loginSubmit}
       </Button>
-      
+
       <Text size="sm" variant="dimmed">
         {he.auth.noAccount} <Link to="/signup" className="text-teal-700 dark:text-teal-300 font-semibold">{he.auth.register}</Link>
       </Text>

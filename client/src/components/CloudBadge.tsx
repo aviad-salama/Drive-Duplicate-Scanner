@@ -1,5 +1,6 @@
 import { GoogleDriveIcon, OneDriveIcon } from './icons';
 import { ProviderId } from '../config/providers';
+
 interface Props {
   provider?: string;
   email?: string;

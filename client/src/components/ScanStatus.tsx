@@ -1,6 +1,7 @@
 import { PauseIcon, SpinnerIcon } from './icons';
 import { Text } from './ui/Typography';
 import { he } from '../languages/he';
+
 interface Props {
   scanning: boolean;
   paused: boolean;

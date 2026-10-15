@@ -19,7 +19,7 @@ export default function BulkDeleteBar({ count, disabled, onClick }: Props) {
           {he.actions.bulkDeleteDescription(count)}
         </Text>
       </div>
-      
+
       <Button
         variant="danger"
         size="lg"

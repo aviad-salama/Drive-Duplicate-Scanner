@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { CloudAccount, CloudFile, DuplicateGroup } from '../types/cloud';
 
 export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGroup[]) {
@@ -16,7 +16,7 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
     setPrevAccountIds(currentAccountIds);
   }
 
-  const getKeepFile = (groupFiles: CloudFile[]) => {
+  const getKeepFile = useCallback((groupFiles: CloudFile[]) => {
     let keepFile = groupFiles[0];
     let bestPriority = Infinity;
 
@@ -31,11 +31,13 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
       }
     });
     return keepFile;
-  };
+  }, [priorityOrder]);
 
   const savings = useMemo(() => {
     const calc: Record<string, number> = {};
-    accounts.forEach((a) => (calc[a.id] = 0));
+    accounts.forEach((a) => {
+      calc[a.id] = 0;
+    });
 
     groups.forEach((group) => {
       const keepFile = getKeepFile(group.files);
@@ -46,14 +48,12 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
       });
     });
     return calc;
-  }, [groups, priorityOrder, accounts]);
+  }, [groups, accounts, getKeepFile]);
 
-  const getFilesToDelete = () => {
-    return groups.flatMap((group) => {
-      const keepFile = getKeepFile(group.files);
-      return group.files.filter((f) => f !== keepFile);
-    });
-  };
+  const getFilesToDelete = () => groups.flatMap((group) => {
+    const keepFile = getKeepFile(group.files);
+    return group.files.filter((f) => f !== keepFile);
+  });
 
   const movePriority = (index: number, direction: 'up' | 'down') => {
     const newOrder = [...priorityOrder];
@@ -70,6 +70,6 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
     savings,
     getKeepFile,
     getFilesToDelete,
-    movePriority
+    movePriority,
   };
 }

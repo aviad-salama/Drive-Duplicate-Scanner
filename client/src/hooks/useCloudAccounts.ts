@@ -20,11 +20,11 @@ export function useCloudAccounts() {
     },
   });
 
-  return { 
-    accounts, 
-    loading, 
+  return {
+    accounts,
+    loading,
     // Expose mutateAsync so it behaves like the old promise-based function
     disconnect: disconnectMutation.mutateAsync,
-    isDisconnecting: disconnectMutation.isPending
+    isDisconnecting: disconnectMutation.isPending,
   };
 }

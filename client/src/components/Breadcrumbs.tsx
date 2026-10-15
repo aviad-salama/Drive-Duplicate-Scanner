@@ -36,7 +36,7 @@ export default function Breadcrumbs({ path }: Props) {
       >
         {pathSegments.map((segment, index) => (
           <span
-            key={`${index}-${segment}`}
+            key={pathSegments.slice(0, index + 1).join('/')}
             className="inline-flex items-center gap-1"
           >
             <span

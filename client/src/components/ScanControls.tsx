@@ -1,6 +1,7 @@
 import { PlayIcon, PauseIcon, CancelIcon } from './icons';
 import { Button } from './ui/Button';
 import { he } from '../languages/he';
+
 interface Props {
   paused: boolean;
   onPause: () => void;
@@ -8,7 +9,9 @@ interface Props {
   onCancel: () => void;
 }
 
-export default function ScanControls({ paused, onPause, onResume, onCancel }: Props) {
+export default function ScanControls({
+  paused, onPause, onResume, onCancel,
+}: Props) {
   return (
     <div className="flex items-center gap-2 mt-3">
       {paused ? (
@@ -34,7 +37,7 @@ export default function ScanControls({ paused, onPause, onResume, onCancel }: Pr
         variant="danger"
         size="sm"
         onClick={onCancel}
-        className="bg-red-50 text-red-600 shadow-none hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
+        className="scan-cancel-button"
       >
         <CancelIcon className="w-4 h-4" />
         {he.actions.cancelScan}

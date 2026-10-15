@@ -1,4 +1,6 @@
-import type { ElementType, HTMLAttributes, JSX, ReactNode } from 'react';
+import type {
+  ElementType, HTMLAttributes, JSX, ReactNode,
+} from 'react';
 
 interface TitleProps {
   level?: 1 | 2 | 3 | 4;
@@ -7,14 +9,14 @@ interface TitleProps {
 }
 
 export function Title({ level = 2, children, className = '' }: TitleProps) {
-  const baseStyle = "font-bold text-gray-800 dark:text-slate-100";
+  const baseStyle = 'font-bold text-gray-800 dark:text-slate-100';
   const sizes = {
-    1: "text-3xl",
-    2: "text-2xl",
-    3: "text-lg",
-    4: "text-base"
+    1: 'text-3xl',
+    2: 'text-2xl',
+    3: 'text-lg',
+    4: 'text-base',
   };
-  
+
   const Tag = `h${level}` as keyof JSX.IntrinsicElements;
   return <Tag className={`${baseStyle} ${sizes[level]} ${className}`.trim()}>{children}</Tag>;
 }
@@ -36,17 +38,17 @@ export function Text({
   ...props
 }: TextProps) {
   const variants = {
-    default: "text-gray-800 dark:text-slate-200",
-    dimmed: "text-gray-500 dark:text-slate-400",
-    danger: "text-red-500 dark:text-red-400",
-    success: "text-emerald-600 dark:text-emerald-400"
+    default: 'text-gray-800 dark:text-slate-200',
+    dimmed: 'text-gray-500 dark:text-slate-400',
+    danger: 'text-red-500 dark:text-red-400',
+    success: 'text-emerald-600 dark:text-emerald-400',
   };
-  
+
   const sizes = {
-    xs: "text-xs",
-    sm: "text-sm",
-    base: "text-base",
-    lg: "text-lg"
+    xs: 'text-xs',
+    sm: 'text-sm',
+    base: 'text-base',
+    lg: 'text-lg',
   };
 
   return (

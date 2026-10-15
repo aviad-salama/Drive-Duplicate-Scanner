@@ -10,15 +10,13 @@ export const he = {
   },
   actions: {
     quickActions: 'פעולות מהירות',
-    bulkDeleteDescription: (count: number) =>
-      `נמצאו ${count} קבצים כפולים שניתן להעביר לאשפה בבת אחת.`,
+    bulkDeleteDescription: (count: number) => `נמצאו ${count} קבצים כפולים שניתן להעביר לאשפה בבת אחת.`,
     deleteAll: (count: number) => `מחק הכל (${count} קבצים)`,
     deleteFile: 'מחק קובץ זה',
     continue: 'המשך',
     pause: 'השהה',
     cancelScan: 'בטל סריקה',
-    confirmBulkDelete: (count: number) =>
-      `להעביר לאשפה ${count} קבצים כפולים לפי התעדוף שהגדרת?`,
+    confirmBulkDelete: (count: number) => `להעביר לאשפה ${count} קבצים כפולים לפי התעדוף שהגדרת?`,
   },
   auth: {
     login: 'התחברות',
@@ -64,10 +62,8 @@ export const he = {
   },
   scan: {
     idle: 'מצא קבצים כפולים שמבזבזים לך מקום',
-    cancelled: (scanned: number, groups: number) =>
-      `הסריקה בוטלה. נסרקו ${scanned} קבצים, נמצאו ${groups} סטים כפולים עד כה.`,
-    completed: (scanned: number, groups: number) =>
-      `נסרקו ${scanned} קבצים. נמצאו ${groups} סטים כפולים.`,
+    cancelled: (scanned: number, groups: number) => `הסריקה בוטלה. נסרקו ${scanned} קבצים, נמצאו ${groups} סטים כפולים עד כה.`,
+    completed: (scanned: number, groups: number) => `נסרקו ${scanned} קבצים. נמצאו ${groups} סטים כפולים.`,
     paused: 'הסריקה מושהית',
     running: 'סורק עכשיו...',
     scanned: (count: number) => `נסרקו ${count} קבצים`,
@@ -76,8 +72,7 @@ export const he = {
     start: 'התחל סריקה',
     scanAll: 'סרוק הכל',
     scanning: 'סורק...',
-    bulkDeleteSuccess: (success: number, failedMessage: string) =>
-      `הועברו לאשפה ${success} קבצים.${failedMessage}`,
+    bulkDeleteSuccess: (success: number, failedMessage: string) => `הועברו לאשפה ${success} קבצים.${failedMessage}`,
     failedItems: (count: number) => ` נכשלו ${count}.`,
   },
 } as const;

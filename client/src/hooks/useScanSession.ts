@@ -109,13 +109,17 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
       } else if (data.type === ScanEventType.Cancelled) {
         finish(data, true);
       } else if (data.type === ScanEventType.Error) {
-        setScanState((prev) => ({ ...prev, error: data.message, scanning: false, paused: false }));
+        setScanState((prev) => ({
+          ...prev, error: data.message, scanning: false, paused: false,
+        }));
         es.close();
       }
     };
 
     es.onerror = () => {
-      setScanState((prev) => ({ ...prev, error: he.errors.scanConnection, scanning: false, paused: false }));
+      setScanState((prev) => ({
+        ...prev, error: he.errors.scanConnection, scanning: false, paused: false,
+      }));
       es.close();
     };
   };

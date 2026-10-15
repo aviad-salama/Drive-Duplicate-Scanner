@@ -20,16 +20,17 @@ import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
 import { he } from '../../languages/he';
 
-const secondaryLink =
-  'inline-flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors';
+const secondaryLink = 'inline-flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
-  const { accounts, loading: accountsLoading, disconnect, isDisconnecting } = useCloudAccounts();
+  const {
+    accounts, loading: accountsLoading, disconnect, isDisconnecting,
+  } = useCloudAccounts();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [params] = useSearchParams();
-  
+
   const scan = useScan();
   const priorityManager = usePriorityManager(accounts, scan.groups);
 
@@ -50,7 +51,7 @@ export default function DashboardPage() {
     if (!window.confirm(he.actions.confirmBulkDelete(filesToDelete.length))) {
       return;
     }
-    
+
     const { success, failed } = await scan.deleteDuplicates(filesToDelete);
     const failedMessage = failed > 0 ? he.scan.failedItems(failed) : '';
     showToast(he.scan.bulkDeleteSuccess(success, failedMessage));
@@ -62,8 +63,8 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-transparent p-8 text-right" dir="rtl">
       {toast && <Toast message={toast} />}
       <div className="max-w-7xl mx-auto">
-        
-        <Card className="mb-8 flex flex-col gap-6 bg-white/90 dark:bg-slate-900/90 shadow-lg shadow-teal-950/5 backdrop-blur-sm dark:shadow-black/10 lg:flex-row lg:items-start lg:justify-between">
+
+        <Card className="dashboard-panel">
           <div className="min-w-0 lg:flex-1">
             <Title level={1} className="text-3xl text-gray-800 dark:text-white">{he.dashboard.title}</Title>
             <Text size="sm" variant="dimmed" className="mt-1">{he.dashboard.greeting(user?.name)}</Text>
@@ -97,7 +98,7 @@ export default function DashboardPage() {
                     setSelectedId(e.target.value);
                     scan.reset();
                   }}
-                  className="rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  className="account-select"
                 >
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -168,7 +169,7 @@ export default function DashboardPage() {
         )}
 
         {scan.duplicateFilesCount > 0 && accounts.length > 1 && (
-          <PrioritySettingsBoard 
+          <PrioritySettingsBoard
             priorityOrder={priorityManager.priorityOrder}
             accounts={accounts}
             savings={priorityManager.savings}

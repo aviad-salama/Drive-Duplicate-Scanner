@@ -1,7 +1,11 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { Button } from '../components/ui/Button';
-
-type Theme = 'light' | 'dark';
+import { ThemeContext, type Theme } from './ThemeContextValue';
 
 const STORAGE_KEY = 'theme';
 
@@ -13,17 +17,23 @@ function getTimeBasedTheme(): Theme {
 function getInitialTheme(): Theme {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved === 'light' || saved === 'dark') {
-    return saved; 
+    return saved;
   }
   return getTimeBasedTheme();
 }
 
-interface ThemeContextValue {
-  theme: Theme;
-  toggleTheme: () => void;
+function ThemeToggleButton({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      onClick={onToggle}
+      className="theme-toggle"
+    >
+      {theme === 'dark' ? '☀️' : '🌙'}
+    </Button>
+  );
 }
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
@@ -36,8 +46,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const contextValue = useMemo(
+    () => ({ theme, toggleTheme }),
+    [theme, toggleTheme],
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       <div className={theme === 'dark' ? 'dark' : ''}>
         <div className="theme-canvas min-h-screen transition-colors">
           {children}
@@ -45,26 +60,5 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         </div>
       </div>
     </ThemeContext.Provider>
-  );
-}
-
-export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return ctx;
-}
-
-function ThemeToggleButton({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
-  return (
-    <Button
-      variant="secondary"
-      size="sm"
-      onClick={onToggle}
-      className="fixed bottom-5 right-5 z-50 h-12 w-12 rounded-full border-teal-200 p-0 text-teal-800 shadow-xl hover:scale-105 active:scale-95 dark:border-teal-800 dark:text-teal-200"
-    >
-      {theme === 'dark' ? '☀️' : '🌙'}
-    </Button>
   );
 }

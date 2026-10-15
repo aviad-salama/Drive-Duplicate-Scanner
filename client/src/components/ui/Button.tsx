@@ -26,14 +26,14 @@ const sizes: Record<ButtonSize, string> = {
 export function Button({
   variant = 'primary',
   size = 'md',
-  type = 'button',
+  type,
   className = '',
   children,
   ...props
 }: ButtonProps) {
   return (
     <button
-      type={type}
+      type={type === 'submit' ? 'submit' : 'button'}
       className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`.trim()}
       {...props}
     >

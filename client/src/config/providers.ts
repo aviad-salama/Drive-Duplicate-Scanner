@@ -1,4 +1,3 @@
-
 export const ProviderId = {
   GOOGLE_DRIVE: 'google-drive',
   ONEDRIVE: 'onedrive',

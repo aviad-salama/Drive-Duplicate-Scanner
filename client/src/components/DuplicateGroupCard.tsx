@@ -13,11 +13,13 @@ interface Props {
   keepFileId: string;
 }
 
-export default function DuplicateGroupCard({ group, index, accountId, onDelete, keepFileId }: Props) {
+export default function DuplicateGroupCard({
+  group, index, accountId, onDelete, keepFileId,
+}: Props) {
   const count = group.files.length;
 
   return (
-    <Card className="bg-white/80 dark:bg-slate-900/80 border-teal-200/80 dark:border-teal-900">
+    <Card className="duplicate-group-card">
       <Title level={2} className="mb-4 flex items-center gap-2 text-lg">
         <Badge variant="teal" className="rounded-full px-3 text-sm">{he.files.groupLabel(index + 1)}</Badge>
         {count === 2 ? he.files.appearsTwice : he.files.appearsMultiple(count)}
