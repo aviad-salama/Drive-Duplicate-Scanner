@@ -26,6 +26,7 @@ export default [
     parserOptions: {
       project: './tsconfig.json',
       tsconfigRootDir: __dirname,
+      warnOnUnsupportedTypeScriptVersion: false,
     }
   }),
 
@@ -39,11 +40,11 @@ export default [
     },
     rules: {
       'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
       'import/prefer-default-export': 'off',
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      'import/extensions': 'off',
+      'react-refresh/only-export-components': 'off',
+      
       'curly': ['error', 'all'],
       
       'linebreak-style': 'off',

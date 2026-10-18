@@ -21,12 +21,12 @@ export default function BulkDeleteBar({ count, disabled, onClick }: Props) {
       </div>
 
       <Button
-        variant="danger"
+        variant="destructive"
         size="lg"
         onClick={onClick}
         disabled={disabled}
       >
-        <TrashIcon className="w-5 h-5" />
+        <TrashIcon className="w-5 h-5 mr-2" />
         {he.actions.deleteAll(count)}
       </Button>
     </Card>

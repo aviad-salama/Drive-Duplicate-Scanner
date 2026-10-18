@@ -2,6 +2,7 @@ type FileKey = string;
 
 export class DisjointSet {
   private readonly parent = new Map<FileKey, FileKey>();
+
   private readonly size = new Map<FileKey, number>();
 
   constructor(keys: FileKey[]) {

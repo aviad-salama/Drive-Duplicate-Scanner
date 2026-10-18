@@ -1,10 +1,10 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { getCloudAccountForUser } from '../services/cloudAccount.service.js';
 import { createScan, finishScan, runMultiAccountScan } from '../services/scan.service.js';
 import { getScanControl, registerScan, unregisterScan } from '../services/scanControl.service.js';
 import { ScanAction, ScanEventType, ScanStatus } from '../types/scan.js';
-import {z} from 'zod';
 
 const scanErrorSchema = z.object({
   name: z.string().optional(),
@@ -23,7 +23,7 @@ function getSafeScanError(error: unknown) {
   }
 
   const result = scanErrorSchema.safeParse(error);
-  
+
   const details = result.success ? result.data : {};
 
   return {
@@ -120,13 +120,13 @@ export async function scanAllHandler(req: Request, res: Response) {
 
 // POST /api/cloud/scans/:scanId/:action  (pause | resume | cancel)
 export function controlScanHandler(req: Request, res: Response) {
-  const control = getScanControl(String(req.params['scanId']), req.user!.id);
+  const control = getScanControl(String(req.params.scanId), req.user!.id);
   if (!control) {
     res.status(404).json({ error: 'Scan not found or already finished.' });
     return;
   }
 
-  const action = String(req.params['action']);
+  const action = String(req.params.action);
   if (action === ScanAction.Pause) {
     control.pause();
   } else if (action === ScanAction.Resume) {

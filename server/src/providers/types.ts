@@ -5,7 +5,7 @@ export interface CloudFile {
   name: string;
   mimeType: string;
   size: string | null;
-  nativeHashes: Record<string, string>; 
+  nativeHashes: Record<string, string>;
   webViewLink: string | null;
   thumbnailLink: string | null;
   path: string | null;

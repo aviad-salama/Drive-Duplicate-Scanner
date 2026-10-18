@@ -16,30 +16,30 @@ export default function ScanControls({
     <div className="flex items-center gap-2 mt-3">
       {paused ? (
         <Button
-          variant="success"
+          variant="default"
           size="sm"
           onClick={onResume}
         >
-          <PlayIcon className="w-4 h-4" />
+          <PlayIcon className="w-4 h-4 mr-2" />
           {he.actions.continue}
         </Button>
       ) : (
         <Button
-          variant="warning"
+          variant="secondary"
           size="sm"
           onClick={onPause}
         >
-          <PauseIcon className="w-4 h-4" />
+          <PauseIcon className="w-4 h-4 mr-2" />
           {he.actions.pause}
         </Button>
       )}
       <Button
-        variant="danger"
+        variant="destructive"
         size="sm"
         onClick={onCancel}
         className="scan-cancel-button"
       >
-        <CancelIcon className="w-4 h-4" />
+        <CancelIcon className="w-4 h-4 mr-2" />
         {he.actions.cancelScan}
       </Button>
     </div>

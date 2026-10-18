@@ -10,8 +10,8 @@ interface Props {
 export default function DeleteFileButton({ file, onDelete }: Props) {
   return (
     <Button
-      variant="danger"
-      size="md"
+      variant="destructive"
+      size="default"
       onClick={() => onDelete(file)}
       className="file-delete-button"
     >

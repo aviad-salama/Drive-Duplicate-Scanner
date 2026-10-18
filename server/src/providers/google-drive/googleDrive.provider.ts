@@ -61,88 +61,87 @@ export const googleDriveProvider: CloudProvider = {
     };
   },
 
-  
-async *listFiles(refreshToken) {
-  const { drive } = authedDrive(refreshToken);
+  async* listFiles(refreshToken) {
+    const { drive } = authedDrive(refreshToken);
 
-  const folders = new Map<
+    const folders = new Map<
     string,
     { name: string; parents: string[] }
-  >();
+    >();
 
-  let folderPageToken: string | undefined;
+    let folderPageToken: string | undefined;
 
-  do {
-    const response = await withRetry(() =>
-      drive.files.list({
-        q: "'me' in owners and trashed = false and mimeType = 'application/vnd.google-apps.folder'",
-        fields: 'nextPageToken, files(id, name, parents)',
-        pageSize: 1000,
-        ...(folderPageToken ? { pageToken: folderPageToken } : {}),
-      }),
-    );
+    do {
+      const currentFolderToken = folderPageToken;
+      const response = await withRetry(() =>
+        drive.files.list({
+          q: "'me' in owners and trashed = false and mimeType = 'application/vnd.google-apps.folder'",
+          fields: 'nextPageToken, files(id, name, parents)',
+          pageSize: 1000,
+          ...(currentFolderToken ? { pageToken: currentFolderToken } : {}),
+        }),
+      );
 
-    for (const folder of response.data.files ?? []) {
-      if (!folder.id) {
-        continue;
+      for (const folder of response.data.files ?? []) {
+        if (!folder.id) {
+          continue;
+        }
+
+        folders.set(folder.id, {
+          name: folder.name ?? '',
+          parents: folder.parents ?? [],
+        });
       }
 
-      folders.set(folder.id, {
-        name: folder.name ?? '',
-        parents: folder.parents ?? [],
-      });
-    }
+      folderPageToken = response.data.nextPageToken ?? undefined;
+    } while (folderPageToken);
 
-    folderPageToken = response.data.nextPageToken ?? undefined;
-  } while (folderPageToken);
+    const buildPath = (file: drive_v3.Schema$File): string => {
+      const parts = [file.name ?? ''];
+      let parentId = file.parents?.[0];
+      const visited = new Set<string>();
 
-  const buildPath = (file: drive_v3.Schema$File): string => {
-    const parts = [file.name ?? ''];
-    let parentId = file.parents?.[0];
-    const visited = new Set<string>();
+      while (parentId && !visited.has(parentId)) {
+        visited.add(parentId);
 
-    while (parentId && !visited.has(parentId)) {
-      visited.add(parentId);
+        const parent = folders.get(parentId);
+        if (!parent) {
+          break;
+        }
 
-      const parent = folders.get(parentId);
-      if (!parent) {
-        break;
+        if (parent.name) {
+          parts.unshift(parent.name);
+        }
+
+        [parentId] = parent.parents;
       }
 
-      if (parent.name) {
-        parts.unshift(parent.name);
-      }
-
-      parentId = parent.parents[0];
-    }
-
-    return `/${parts.filter(Boolean).join('/')}`;
-  };
-
-  let pageToken: string | undefined;
-
-  do {
-    const params: drive_v3.Params$Resource$Files$List = {
-      q: "'me' in owners and trashed = false and mimeType != 'application/vnd.google-apps.folder' and not mimeType contains 'application/vnd.google-apps'",
-      fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink, parents)',
-      pageSize: 250,
-      ...(pageToken ? { pageToken } : {}),
+      return `/${parts.filter(Boolean).join('/')}`;
     };
 
-    const response = await withRetry(() => drive.files.list(params));
+    let pageToken: string | undefined;
 
-    const files = (response.data.files ?? []).map((file) =>
-      toCloudFile(file, buildPath(file)),
-    );
+    do {
+      const params: drive_v3.Params$Resource$Files$List = {
+        q: "'me' in owners and trashed = false and mimeType != 'application/vnd.google-apps.folder' and not mimeType contains 'application/vnd.google-apps'",
+        fields: 'nextPageToken, files(id, name, mimeType, size, md5Checksum, webViewLink, thumbnailLink, parents)',
+        pageSize: 250,
+        ...(pageToken ? { pageToken } : {}),
+      };
 
-    if (files.length > 0) {
-      yield files;
-    }
+      const response = await withRetry(() => drive.files.list(params));
 
-    pageToken = response.data.nextPageToken ?? undefined;
-  } while (pageToken);
-},
+      const files = (response.data.files ?? []).map((file) =>
+        toCloudFile(file, buildPath(file)),
+      );
 
+      if (files.length > 0) {
+        yield files;
+      }
+
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
+  },
 
   async deleteFile(refreshToken, fileId) {
     const { drive } = authedDrive(refreshToken);

@@ -6,7 +6,6 @@ import type { CloudFile, CloudProvider, ConnectedAccountInfo } from '../types.js
 
 const SCOPES = ['offline_access', 'Files.ReadWrite', 'User.Read'];
 
-
 interface MicrosoftTokenResponse {
   access_token: string;
   refresh_token?: string;
@@ -29,7 +28,7 @@ interface GraphDriveItem {
     large?: { url?: string };
     medium?: { url?: string };
   }>;
-    parentReference?: {
+  parentReference?: {
     path?: string;
   };
 }
@@ -56,7 +55,6 @@ async function getAccessToken(refreshToken: string): Promise<string> {
   const data = (await res.json()) as MicrosoftTokenResponse;
   return data.access_token;
 }
-
 
 const toCloudFile = (item: GraphDriveItem): CloudFile => {
   const nativeHashes: Record<string, string> = {};
@@ -86,7 +84,6 @@ const toCloudFile = (item: GraphDriveItem): CloudFile => {
     path: path.startsWith('/') ? path : `/${path}`,
   };
 };
-
 
 export const oneDriveProvider: CloudProvider = {
   id: 'onedrive',
@@ -150,7 +147,7 @@ export const oneDriveProvider: CloudProvider = {
     };
   },
 
-  async *listFiles(refreshToken: string) {
+  async* listFiles(refreshToken: string) {
     const accessToken = await getAccessToken(refreshToken);
     let nextLink: string | null =
       'https://graph.microsoft.com/v1.0/me/drive/root/delta?$select=id,name,size,webUrl,file,thumbnails,parentReference';
@@ -161,7 +158,9 @@ export const oneDriveProvider: CloudProvider = {
         const r = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        if (!r.ok) throw new Error(`OneDrive API returned ${r.status}`);
+        if (!r.ok) {
+          throw new Error(`OneDrive API returned ${r.status}`);
+        }
         return r;
       });
 
@@ -198,7 +197,7 @@ export const oneDriveProvider: CloudProvider = {
     const accessToken = await getAccessToken(refreshToken);
     const headers: Record<string, string> = { Authorization: `Bearer ${accessToken}` };
     if (range) {
-      headers['Range'] = range;
+      headers.Range = range;
     }
 
     const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`, {

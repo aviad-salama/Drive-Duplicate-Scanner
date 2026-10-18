@@ -108,7 +108,7 @@ export default function DashboardPage() {
                 </select>
                 <Button
                   variant="secondary"
-                  size="md"
+                  size="default"
                   className="font-medium"
                   disabled={scan.scanning || isDisconnecting}
                   onClick={async () => {
@@ -133,8 +133,8 @@ export default function DashboardPage() {
 
             {accounts.length >= 2 && (
               <Button
-                variant="warning"
-                size="md"
+                variant="default"
+                size="default"
                 onClick={scan.startScanAll}
                 disabled={scan.scanning}
                 className="bg-orange-500 shadow-md shadow-orange-600/20 hover:bg-orange-600"
@@ -145,8 +145,8 @@ export default function DashboardPage() {
             )}
 
             <Button
-              variant="primary"
-              size="lg"
+              variant="default"
+              size="default"
               onClick={() => activeId && scan.startScan(activeId)}
               disabled={!activeId || scan.scanning}
             >

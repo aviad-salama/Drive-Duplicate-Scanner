@@ -6,7 +6,7 @@ import { AppError } from '../utils/errors.js';
 
 // Load the authenticated user's cloud account and attach it to req.cloud.
 export async function attachCloudAccount(req: Request, _res: Response, next: NextFunction) {
-  const account = await getCloudAccountForUser(String(req.params['accountId']), req.user!.id);
+  const account = await getCloudAccountForUser(String(req.params.accountId), req.user!.id);
   if (!account) {
     throw new AppError(404, 'Cloud account not found.');
   }

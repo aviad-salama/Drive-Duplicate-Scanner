@@ -10,7 +10,6 @@ function getFileKey(file: CloudFile): FileKey {
   return `${file.accountId ?? ''}:${file.id}`;
 }
 
-
 function buildNativeConnections(files: CloudFile[], sets: DisjointSet): void {
   const owners = new Map<string, FileKey>();
 
@@ -153,7 +152,7 @@ export async function findDuplicateGroups(
     .map((group) => ({
       type: 'exact' as const,
       files: [...group].sort(
-        (a, b) => parseInt(b.size ?? '0') - parseInt(a.size ?? '0'),
+        (a, b) => parseInt(b.size ?? '0', 10) - parseInt(a.size ?? '0', 10),
       ),
     }));
 }

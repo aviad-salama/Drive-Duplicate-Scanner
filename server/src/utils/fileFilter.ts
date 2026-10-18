@@ -14,17 +14,17 @@ const DANGEROUS_EXTENSIONS = new Set([
   '.db', '.sqlite', '.sqlite3', '.db-journal', '.msb', '.sdb', '.log', '.bak',
   // Caches, Temp and Virtual Machines
   '.tmp', '.temp', '.cache', '.swp', '.asar', '.pak', '.so', '.dylib', '.ko',
-  '.vmx', '.vmdk', '.ova', '.ovf', '.qcow2', '.vhd', '.vhdx', '.wim', '.esd', '.cab'
+  '.vmx', '.vmdk', '.ova', '.ovf', '.qcow2', '.vhd', '.vhdx', '.wim', '.esd', '.cab',
 ]);
 
 const DANGEROUS_EXACT_NAMES = new Set([
   // Hidden OS Files
-  '.ds_store', 'thumbs.db', 'desktop.ini', 'ntuser.dat', 'bootmgr', 
+  '.ds_store', 'thumbs.db', 'desktop.ini', 'ntuser.dat', 'bootmgr',
   'pagefile.sys', 'swapfile.sys', 'hiberfil.sys',
   // Config and Package Managers
-  'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 
+  'package.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
   'composer.json', 'composer.lock', 'dockerfile', 'makefile', 'cmakelists.txt',
-  'web.config', 'app.config', '.htaccess'
+  'web.config', 'app.config', '.htaccess',
 ]);
 
 const DANGEROUS_PATH_SEGMENTS = new Set([
@@ -35,14 +35,14 @@ const DANGEROUS_PATH_SEGMENTS = new Set([
   // Build and Output dirs
   'bin', 'obj', 'build', 'dist', 'out', 'target',
   // Windows System Dirs
-  'appdata', 'program files', 'program files (x86)', 'windows', 'system32', 
+  'appdata', 'program files', 'program files (x86)', 'windows', 'system32',
   'syswow64', 'users', 'programdata', 'perflogs', 'boot', 'recovery',
   // Unix/Mac System Dirs
-  'library', 'system', 'usr', 'var', 'etc', 'sbin', 'opt', 'dev', 'proc', 'sys', 'run', 'tmp'
+  'library', 'system', 'usr', 'var', 'etc', 'sbin', 'opt', 'dev', 'proc', 'sys', 'run', 'tmp',
 ]);
 
 export function isSafeFile(file: CloudFile): boolean {
-  if (file.size === '0' ) {
+  if (file.size === '0') {
     return false;
   }
 
