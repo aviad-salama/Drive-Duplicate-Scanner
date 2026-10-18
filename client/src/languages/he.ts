@@ -68,7 +68,6 @@ export const he = {
     running: 'סורק עכשיו...',
     scanned: (count: number) => `נסרקו ${count} קבצים`,
     currentAccount: (account: string) => `חשבון נוכחי: ${account}`,
-    duplicatesFound: (count: number) => `נמצאו עד כה ${count} סטים של כפילויות!`,
     start: 'התחל סריקה',
     scanAll: 'סרוק הכל',
     scanning: 'סורק...',

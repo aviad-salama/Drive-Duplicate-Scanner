@@ -7,7 +7,6 @@ interface Props {
   paused: boolean;
   cancelled: boolean;
   displayScanned: number;
-  liveDuplicates: number;
   groupsCount: number;
   currentAccount: string;
 }
@@ -17,7 +16,6 @@ export default function ScanStatus({
   paused,
   cancelled,
   displayScanned,
-  liveDuplicates,
   groupsCount,
   currentAccount,
 }: Props) {
@@ -47,9 +45,6 @@ export default function ScanStatus({
         {currentAccount && (
           <Text size="sm" variant="dimmed" className="mr-8">{he.scan.currentAccount(currentAccount)}</Text>
         )}
-        <Text as="div" size="sm" variant="danger" className="mr-8 font-semibold">
-          {he.scan.duplicatesFound(liveDuplicates)}
-        </Text>
       </div>
     );
   }

@@ -29,7 +29,6 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
     currentAccount: '',
     error: '',
     targetScanned: 0,
-    liveDuplicates: 0,
   });
 
   // Animate the file counter.
@@ -66,7 +65,6 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
       currentAccount: '',
       error: '',
       targetScanned: 0,
-      liveDuplicates: 0,
     });
   };
 
@@ -101,7 +99,6 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
         setScanState((prev) => ({
           ...prev,
           targetScanned: data.scannedCount,
-          liveDuplicates: data.duplicatesCount,
           currentAccount: `${providerLabel(data.currentProvider)} – ${data.currentAccount}`,
         }));
       } else if (data.type === ScanEventType.Complete) {

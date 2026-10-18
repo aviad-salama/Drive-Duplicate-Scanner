@@ -89,14 +89,6 @@ function buildGroups(files: CloudFile[], sets: DisjointSet): CloudFile[][] {
   return [...groups.values()].filter((group) => group.length > 1);
 }
 
-export function countNativeDuplicateGroups(files: CloudFile[]): number {
-  const sets = new DisjointSet(files.map(getFileKey));
-
-  buildNativeConnections(files, sets);
-
-  return buildGroups(files, sets).length;
-}
-
 /**
  * Groups files connected by matching provider hashes, using streamed SHA-256
  * only for same-size buckets that have no hash algorithm common to every file.

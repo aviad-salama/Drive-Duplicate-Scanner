@@ -48,7 +48,7 @@
   }
 
   .priority-actions {
-    @apply flex gap-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900;
+    @apply flex gap-2;
   }
 
   .priority-move-button {

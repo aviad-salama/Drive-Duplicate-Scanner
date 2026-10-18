@@ -74,7 +74,6 @@ export default function DashboardPage() {
                 paused={scan.paused}
                 cancelled={scan.cancelled}
                 displayScanned={scan.displayScanned}
-                liveDuplicates={scan.liveDuplicates}
                 groupsCount={scan.groups.length}
                 currentAccount={scan.currentAccount}
               />
