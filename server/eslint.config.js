@@ -52,4 +52,10 @@ export default [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
+  {
+    files: ['src/config/prisma.ts'],
+    rules: {
+      'import/no-relative-packages': 'off',
+    },
+  },
 ];
