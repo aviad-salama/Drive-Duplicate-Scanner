@@ -4,7 +4,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/button';
 import { ThemeContext, type Theme } from './ThemeContextValue';
 
 const STORAGE_KEY = 'theme';

@@ -1,6 +1,6 @@
 import type { CloudFile } from '../types/cloud';
 import { he } from '../languages/he';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 
 interface Props {
   file: CloudFile;

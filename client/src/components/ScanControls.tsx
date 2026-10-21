@@ -1,5 +1,5 @@
 import { PlayIcon, PauseIcon, CancelIcon } from './icons';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 import { he } from '../languages/he';
 
 interface Props {

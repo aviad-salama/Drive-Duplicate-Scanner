@@ -8,11 +8,13 @@ import { ScanAction, ScanEventType, ScanStatus } from '../types/scan.js';
 
 const scanErrorSchema = z.object({
   name: z.string().optional(),
+  message: z.string().optional(),
   code: z.union([z.string(), z.number()]).optional(),
   status: z.number().optional(),
   response: z.object({
     data: z.object({
       error: z.string().optional(),
+      error_description: z.string().optional(),
     }).optional(),
   }).optional(),
 });
@@ -28,14 +30,20 @@ function getSafeScanError(error: unknown) {
 
   return {
     name: details.name ?? 'UnknownError',
+    message: details.message,
     code: details.code,
     status: details.status,
-    providerError: details.response?.data?.error,
+    providerError: details.response?.data?.error_description
+      ?? details.response?.data?.error,
   };
 }
 
 function getScanFailureMessage(error: unknown, fallback: string) {
-  return getSafeScanError(error).providerError || fallback;
+  const details = getSafeScanError(error);
+  if (details.providerError === 'invalid_grant') {
+    return 'Cloud authorization expired or was revoked. Disconnect and reconnect this account.';
+  }
+  return details.providerError || details.message || fallback;
 }
 
 // Opens an SSE stream and returns a helper that sends one event.

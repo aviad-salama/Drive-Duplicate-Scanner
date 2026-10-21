@@ -2,7 +2,7 @@ import type { CloudAccount } from '../types/cloud';
 import { formatBytes } from '../utils/format';
 import { providerLabel } from '../config/providers';
 import { he } from '../languages/he';
-import { Badge } from './ui/Badge';
+import { Badge } from './ui/badge';
 import PriorityMoveButtons from './PriorityMoveButtons';
 
 interface Props {

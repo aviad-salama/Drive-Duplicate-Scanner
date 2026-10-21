@@ -2,10 +2,23 @@
   "name": "drive-duplicate-scanner",
   "private": true,
   "scripts": {
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "dev": "concurrently --names client,server --prefix-colors cyan,green \"npm run dev:client\" \"npm run dev:server\"",
+    "start:client": "npm --prefix client run preview",
+    "start:server": "npm --prefix server run start",
+    "start": "concurrently --names client,server --prefix-colors cyan,green \"npm run start:client\" \"npm run start:server\"",
     "lint:client": "npm --prefix client run lint",
     "lint:server": "npm --prefix server run lint",
     "lint": "npm run lint:client && npm run lint:server",
-    "lint:fix": "npm --prefix client run lint -- --fix && npm --prefix server run lint -- --fix",
-    "build": "npm --prefix client run build && npm --prefix server run build"
+    "lint:fix:client": "npm --prefix client run lint -- --fix",
+    "lint:fix:server": "npm --prefix server run lint -- --fix",
+    "lint:fix": "npm run lint:fix:client && npm run lint:fix:server",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build",
+    "build": "npm run build:client && npm run build:server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

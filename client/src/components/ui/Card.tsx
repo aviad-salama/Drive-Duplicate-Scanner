@@ -1,5 +1,5 @@
-// client/src/components/ui/Card.tsx
 import { ReactNode } from 'react';
+import { cn } from '../../lib/utils';
 
 interface CardProps {
   children: ReactNode;
@@ -15,7 +15,12 @@ const paddingStyles = {
 
 export function Card({ children, padding = 'md', className = '' }: CardProps) {
   return (
-    <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 shadow-sm transition-colors dark:border-slate-700 ${paddingStyles[padding]} ${className}`.trim()}>
+    <div className={cn(
+      'rounded-2xl border border-gray-200 bg-white shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-900',
+      paddingStyles[padding],
+      className,
+    )}
+    >
       {children}
     </div>
   );

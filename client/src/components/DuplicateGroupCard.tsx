@@ -2,7 +2,7 @@ import type { CloudFile, DuplicateGroup } from '../types/cloud';
 import FileCard from './FileCard';
 import { Card } from './ui/Card';
 import { Title } from './ui/Typography';
-import { Badge } from './ui/Badge';
+import { Badge } from './ui/badge';
 import { he } from '../languages/he';
 
 interface Props {

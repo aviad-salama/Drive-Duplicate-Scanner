@@ -4,8 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import type { LoginFormData } from '../../../types/auth';
 import { Title, Text } from '../../../components/ui/Typography';
-import { Button } from '../../../components/ui/Button';
+import { Button } from '../../../components/ui/button';
 import { Alert } from '../../../components/ui/Alert';
+import { Input } from '../../../components/ui/input';
 import { he } from '../../../languages/he';
 
 export default function LoginPage() {
@@ -40,8 +41,7 @@ export default function LoginPage() {
       {error && <Alert variant="error" className="p-3 text-sm">{error}</Alert>}
 
       <div className="flex flex-col gap-1">
-        <input
-          className="form-input"
+        <Input
           type="email"
           placeholder={he.auth.email}
           {...register('email', { required: 'Email is required' })}
@@ -50,8 +50,7 @@ export default function LoginPage() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <input
-          className="form-input"
+        <Input
           type="password"
           placeholder={he.auth.password}
           {...register('password', { required: 'Password is required' })}

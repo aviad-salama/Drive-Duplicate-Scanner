@@ -1,5 +1,5 @@
 import { he } from '../languages/he';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 
 interface Props {
   index: number;

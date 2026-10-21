@@ -1,7 +1,7 @@
 import { TrashIcon } from './icons';
 import { Title, Text } from './ui/Typography';
 import { Card } from './ui/Card';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 import { he } from '../languages/he';
 
 interface Props {

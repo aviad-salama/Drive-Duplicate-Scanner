@@ -1,21 +1,23 @@
 import type { ReactNode } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../../lib/utils';
 
-interface AlertProps {
+const alertVariants = cva('rounded-xl border p-4', {
+  variants: {
+    variant: {
+      error: 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/50',
+      success: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900/50',
+      info: 'bg-teal-50 text-teal-700 border-teal-100 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-900/50',
+    },
+  },
+  defaultVariants: { variant: 'info' },
+});
+
+interface AlertProps extends VariantProps<typeof alertVariants> {
   children: ReactNode;
-  variant?: 'error' | 'success' | 'info';
   className?: string;
 }
 
-const variants = {
-  error: 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/50',
-  success: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50',
-  info: 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-100 dark:border-teal-900/50',
-};
-
 export function Alert({ children, variant = 'info', className = '' }: AlertProps) {
-  return (
-    <div className={`rounded-xl border p-4 ${variants[variant]} ${className}`.trim()}>
-      {children}
-    </div>
-  );
+  return <div className={cn(alertVariants({ variant }), className)}>{children}</div>;
 }

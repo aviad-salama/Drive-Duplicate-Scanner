@@ -1,4 +1,4 @@
-import { Badge } from './ui/Badge';
+import { Badge } from './ui/badge';
 import { he } from '../languages/he';
 
 interface Props {

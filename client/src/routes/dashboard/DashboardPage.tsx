@@ -16,7 +16,7 @@ import type { CloudFile } from '../../types/cloud';
 import { ScanAllIcon } from '../../components/icons';
 import { Card } from '../../components/ui/Card';
 import { Title, Text } from '../../components/ui/Typography';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui/button';
 import { Alert } from '../../components/ui/Alert';
 import { he } from '../../languages/he';
 
