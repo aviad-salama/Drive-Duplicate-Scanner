@@ -23,3 +23,9 @@ export interface CloudAccount {
   accountEmail: string;
   createdAt: string;
 }
+
+export interface CloudAuthIssue {
+  accountId: string;
+  provider: string;
+  accountEmail: string;
+}

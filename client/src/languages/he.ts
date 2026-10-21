@@ -7,6 +7,9 @@ export const he = {
     disconnecting: 'מנתק...',
     logout: 'התנתק',
     noAccounts: 'חבר ענן כדי להתחיל לסרוק כפילויות.',
+    reconnectProvider: (label: string) => `התחבר מחדש ל${label}`,
+    disconnectedAccount: 'חשבון הענן נותק. שאר החשבונות נשארו מחוברים.',
+    disconnectFailed: 'לא הצלחנו לנתק את חשבון הענן. נסה שוב.',
   },
   actions: {
     quickActions: 'פעולות מהירות',
@@ -41,6 +44,13 @@ export const he = {
     deleteSuccess: (fileName: string) => `הקובץ ${fileName} הועבר לאשפה`,
     cloudConnection: 'חיבור הענן נכשל, נסה שוב.',
     scanConnection: 'שגיאת חיבור לשרת. נסה להתחבר מחדש.',
+    cloudAuthorization: (provider: string, email: string) => {
+      let emailText = '';
+      if (email) {
+        emailText = ` (${email})`;
+      }
+      return `החיבור ל${provider}${emailText} פג תוקף או בוטל. אפשר להתחבר מחדש או לנתק את החשבון.`;
+    },
   },
   files: {
     location: 'מיקום:',

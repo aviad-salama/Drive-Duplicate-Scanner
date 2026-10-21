@@ -10,6 +10,11 @@ export function useScan() {
   const scanSession = useScanSession((data: { duplicateGroups: DuplicateGroup[] }) => {
     duplicateGroups.replaceGroups(data.duplicateGroups);
   });
+  const { cloudAuthIssue: sessionCloudAuthIssue } = scanSession;
+  let cloudAuthIssue = sessionCloudAuthIssue;
+  if (!cloudAuthIssue) {
+    cloudAuthIssue = duplicateGroups.cloudAuthIssue;
+  }
 
   const reset = () => {
     duplicateGroups.resetGroups();
@@ -33,6 +38,7 @@ export function useScan() {
     deleteFile: duplicateGroups.deleteFile,
     deleteDuplicates: duplicateGroups.deleteDuplicates,
     ...scanSession,
+    cloudAuthIssue,
     startScan,
     startScanAll,
     reset,

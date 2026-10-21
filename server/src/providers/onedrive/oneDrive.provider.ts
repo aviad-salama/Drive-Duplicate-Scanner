@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
 import { env } from '../../config/env.js';
-import { AppError } from '../../utils/errors.js';
+import { AppError, CloudAuthorizationError } from '../../utils/errors.js';
 import { withRetry } from '../../utils/retry.js';
 import type { CloudFile, CloudProvider, ConnectedAccountInfo } from '../types.js';
 
@@ -10,6 +10,8 @@ interface MicrosoftTokenResponse {
   access_token: string;
   refresh_token?: string;
   expires_in: number;
+  error?: string;
+  error_description?: string;
 }
 
 interface GraphDriveItem {
@@ -42,17 +44,33 @@ async function getAccessToken(refreshToken: string): Promise<string> {
     scope: SCOPES.join(' '),
   });
 
-  const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
+  const res = await fetch(
+    'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    },
+  );
+
+  const data = (await res.json().catch(() => ({}))) as Partial<MicrosoftTokenResponse>;
 
   if (!res.ok) {
-    throw new AppError(401, 'Failed to refresh Microsoft access token');
+    if (data.error === 'invalid_grant' || res.status === 401) {
+      throw new CloudAuthorizationError('onedrive');
+    }
+
+    let status = 400;
+    if (res.status >= 500) {
+      status = 502;
+    }
+    throw new AppError(status, `Microsoft token refresh failed (HTTP ${res.status}).`);
   }
 
-  const data = (await res.json()) as MicrosoftTokenResponse;
+  if (!data.access_token) {
+    throw new AppError(502, 'Microsoft token refresh returned no access token.');
+  }
+
   return data.access_token;
 }
 
@@ -80,7 +98,10 @@ const toCloudFile = (item: GraphDriveItem): CloudFile => {
     size: item.size !== undefined ? String(item.size) : null,
     nativeHashes,
     webViewLink: item.webUrl ?? null,
-    thumbnailLink: item.thumbnails?.[0]?.large?.url ?? item.thumbnails?.[0]?.medium?.url ?? null,
+    thumbnailLink:
+      item.thumbnails?.[0]?.large?.url ??
+      item.thumbnails?.[0]?.medium?.url ??
+      null,
     path: path.startsWith('/') ? path : `/${path}`,
   };
 };
@@ -111,19 +132,23 @@ export const oneDriveProvider: CloudProvider = {
       grant_type: 'authorization_code',
     });
 
-    const tokenRes = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
-    });
+    const tokenRes = await fetch(
+      'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      },
+    );
 
     if (!tokenRes.ok) {
-      throw new AppError(400, 'Microsoft token exchange failed');
+      throw new AppError(400, 'Microsoft token exchange failed.');
     }
 
     const tokens = (await tokenRes.json()) as MicrosoftTokenResponse;
+
     if (!tokens.refresh_token) {
-      throw new AppError(400, 'Microsoft did not return a refresh token');
+      throw new AppError(400, 'Microsoft did not return a refresh token.');
     }
 
     const userRes = await fetch('https://graph.microsoft.com/v1.0/me', {
@@ -131,13 +156,19 @@ export const oneDriveProvider: CloudProvider = {
     });
 
     if (!userRes.ok) {
-      throw new AppError(400, 'Failed to fetch Microsoft profile info');
+      throw new AppError(400, 'Failed to fetch Microsoft profile info.');
     }
 
-    const userData = (await userRes.json()) as { id: string; userPrincipalName?: string; mail?: string };
+    const userData = (await userRes.json()) as {
+      id: string;
+      userPrincipalName?: string;
+      mail?: string;
+    };
+
     const email = userData.mail || userData.userPrincipalName;
+
     if (!email) {
-      throw new AppError(400, 'Could not determine Microsoft email');
+      throw new AppError(400, 'Could not determine Microsoft email.');
     }
 
     return {
@@ -149,19 +180,26 @@ export const oneDriveProvider: CloudProvider = {
 
   async* listFiles(refreshToken: string) {
     const accessToken = await getAccessToken(refreshToken);
+
     let nextLink: string | null =
       'https://graph.microsoft.com/v1.0/me/drive/root/delta?$select=id,name,size,webUrl,file,thumbnails,parentReference';
 
     do {
       const url = nextLink;
+
       const res = await withRetry(async () => {
-        const r = await fetch(url, {
+        const response = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        if (!r.ok) {
-          throw new Error(`OneDrive API returned ${r.status}`);
+
+        if (!response.ok) {
+          throw new AppError(
+            response.status,
+            `OneDrive API returned HTTP ${response.status}.`,
+          );
         }
-        return r;
+
+        return response;
       });
 
       const data = (await res.json()) as {
@@ -169,7 +207,6 @@ export const oneDriveProvider: CloudProvider = {
         '@odata.nextLink'?: string;
       };
 
-      // Filter only files (items with a file facet and checksum, skipping folders or deleted items)
       const files = (data.value ?? [])
         .filter((item) => Boolean(item.file && item.file.hashes && !('@removed' in item)))
         .map(toCloudFile);
@@ -177,42 +214,54 @@ export const oneDriveProvider: CloudProvider = {
       if (files.length > 0) {
         yield files;
       }
+
       nextLink = data['@odata.nextLink'] ?? null;
     } while (nextLink);
   },
 
   async deleteFile(refreshToken: string, fileId: string): Promise<void> {
     const accessToken = await getAccessToken(refreshToken);
-    const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+
+    const res = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
 
     if (!res.ok && res.status !== 404) {
-      throw new AppError(res.status, 'Failed to delete file from OneDrive');
+      throw new AppError(res.status, 'Failed to delete file from OneDrive.');
     }
   },
 
   async streamFile(refreshToken: string, fileId: string, range?: string) {
     const accessToken = await getAccessToken(refreshToken);
-    const headers: Record<string, string> = { Authorization: `Bearer ${accessToken}` };
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+
     if (range) {
       headers.Range = range;
     }
 
-    const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`, {
-      headers,
-    });
+    const res = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`,
+      { headers },
+    );
 
     if (!res.ok && res.status !== 206) {
-      throw new AppError(res.status, 'Failed to stream OneDrive file');
+      throw new AppError(res.status, 'Failed to stream OneDrive file.');
     }
 
     const responseHeaders: Record<string, string> = {};
-    for (const h of ['content-type', 'content-length', 'content-range']) {
-      const v = res.headers.get(h);
-      if (v) {
-        responseHeaders[h] = v;
+
+    for (const header of ['content-type', 'content-length', 'content-range']) {
+      const value = res.headers.get(header);
+
+      if (value) {
+        responseHeaders[header] = value;
       }
     }
 
@@ -225,6 +274,7 @@ export const oneDriveProvider: CloudProvider = {
 
   async getThumbnail(refreshToken: string, fileId: string) {
     const accessToken = await getAccessToken(refreshToken);
+
     const res = await fetch(
       `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/thumbnails/0/large/content`,
       {

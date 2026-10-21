@@ -1,8 +1,5 @@
-import js from '@eslint/js';
 import globals from 'globals';
-import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
-
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { FlatCompat } from '@eslint/eslintrc';

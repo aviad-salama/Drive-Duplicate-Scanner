@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { providerLabel } from '../config/providers';
-import {
-  controlScan,
-  scanAllUrl,
-  scanUrl,
-} from '../services/cloudService';
-import type { DuplicateGroup } from '../types/cloud';
+import { controlScan, scanAllUrl, scanUrl } from '../services/cloudService';
+import type { CloudAuthIssue, DuplicateGroup } from '../types/cloud';
 import { he } from '../languages/he';
 import { ScanAction, ScanEventType, ScanMode } from '../types/scan';
 
@@ -29,6 +25,7 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
     currentAccount: '',
     error: '',
     targetScanned: 0,
+    cloudAuthIssue: null as CloudAuthIssue | null,
   });
 
   // Animate the file counter.
@@ -56,7 +53,8 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
     sourceRef.current = null;
     scanIdRef.current = null;
     setDisplayScanned(0);
-    // איפוס קל ומהיר של כל הסטייטים
+    setScanState((prev) => ({ ...prev, cloudAuthIssue: null }));
+    // Reset all scan state.
     setScanState({
       scanning: false,
       paused: false,
@@ -65,6 +63,7 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
       currentAccount: '',
       error: '',
       targetScanned: 0,
+      cloudAuthIssue: null,
     });
   };
 
@@ -106,18 +105,32 @@ export function useScanSession(onFinished: ScanFinishedHandler) {
       } else if (data.type === ScanEventType.Cancelled) {
         finish(data, true);
       } else if (data.type === ScanEventType.Error) {
+        let cloudAuthIssue: CloudAuthIssue | null = null;
+        if (
+          data.code === 'CLOUD_REAUTH_REQUIRED'
+          && typeof data.accountId === 'string'
+          && typeof data.provider === 'string'
+        ) {
+          let accountEmail = '';
+          if (typeof data.accountEmail === 'string') {
+            accountEmail = data.accountEmail;
+          }
+          cloudAuthIssue = {
+            accountId: data.accountId,
+            provider: data.provider,
+            accountEmail,
+          };
+        }
+
         setScanState((prev) => ({
-          ...prev, error: data.message, scanning: false, paused: false,
+          ...prev,
+          error: data.message ?? he.errors.scanConnection,
+          cloudAuthIssue,
+          scanning: false,
+          paused: false,
         }));
         es.close();
       }
-    };
-
-    es.onerror = () => {
-      setScanState((prev) => ({
-        ...prev, error: he.errors.scanConnection, scanning: false, paused: false,
-      }));
-      es.close();
     };
   };
 

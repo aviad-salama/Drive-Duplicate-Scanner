@@ -1,41 +1,66 @@
 import { useState } from 'react';
 import { deleteFile as deleteFileApi } from '../services/cloudService';
-import type { CloudFile, DuplicateGroup } from '../types/cloud';
+import { ApiError } from '../services/apiClient';
+import type { CloudAuthIssue, CloudFile, DuplicateGroup } from '../types/cloud';
 
-/** Owns duplicate groups and optimistic single- and bulk-delete operations. */
 export function useDuplicateGroups() {
   const [groups, setGroups] = useState<DuplicateGroup[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const [cloudAuthIssue, setCloudAuthIssue] = useState<CloudAuthIssue | null>(null);
 
-  const resetGroups = () => setGroups([]);
-  const replaceGroups = (nextGroups: DuplicateGroup[]) => setGroups(nextGroups);
+  const resetGroups = () => {
+    setGroups([]);
+    setCloudAuthIssue(null);
+  };
+
+  const replaceGroups = (nextGroups: DuplicateGroup[]) => {
+    setGroups(nextGroups);
+    setCloudAuthIssue(null);
+  };
 
   const getFileKey = (file: CloudFile) => `${file.accountId ?? ''}:${file.id}`;
 
   const removeFromGroups = (file: CloudFile) => {
     const targetKey = getFileKey(file);
 
-    setGroups((prev) => prev
-      .map((group) => ({
-        ...group,
-        files: group.files.filter((current) => getFileKey(current) !== targetKey),
-      }))
-      .filter((group) => group.files.length > 1));
+    setGroups((previousGroups) => previousGroups.map((group) => ({
+      ...group,
+      files: group.files.filter(
+        (current) => getFileKey(current) !== targetKey,
+      ),
+    })).filter((group) => group.files.length > 1));
   };
 
-  const deleteFile = async (file: CloudFile) => {
+  const deleteFile = async (file: CloudFile): Promise<boolean> => {
     if (!file.accountId) {
       return false;
     }
 
-    const previousGroups = [...groups];
+    const previousGroups = groups;
     removeFromGroups(file);
 
     try {
       await deleteFileApi(file.accountId, file.id);
+      setCloudAuthIssue(null);
       return true;
-    } catch {
+    } catch (error: unknown) {
       setGroups(previousGroups);
+
+      if (
+        error instanceof ApiError && error.code === 'CLOUD_REAUTH_REQUIRED'
+      ) {
+        const accountId = error.accountId ?? file.accountId;
+        const provider = error.provider ?? file.provider;
+
+        if (accountId && provider) {
+          setCloudAuthIssue({
+            accountId,
+            provider,
+            accountEmail: error.accountEmail ?? file.accountEmail ?? '',
+          });
+        }
+      }
+
       return false;
     }
   };
@@ -45,24 +70,35 @@ export function useDuplicateGroups() {
     let success = 0;
     let failed = 0;
 
-    for (const file of filesToDelete) {
-      if (await deleteFile(file)) {
-        success++;
-      } else {
-        failed++;
-      }
-    }
+    try {
+      for (const file of filesToDelete) {
+        if (await deleteFile(file)) {
+          success++;
+        } else {
+          failed++;
+        }
 
-    setDeleting(false);
-    return { success, failed };
+        if (cloudAuthIssue) {
+          break;
+        }
+      }
+
+      return { success, failed };
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  const duplicateFilesCount = groups.reduce((acc, group) => acc + group.files.length - 1, 0);
+  const duplicateFilesCount = groups.reduce(
+    (total, group) => total + group.files.length - 1,
+    0,
+  );
 
   return {
     groups,
     deleting,
     duplicateFilesCount,
+    cloudAuthIssue,
     resetGroups,
     replaceGroups,
     deleteFile,

@@ -16,4 +16,5 @@ build/
 server/generated/prisma/
 
 # Repomix
-repomix-output.xml
+repomix-output*.xml
+**/*.tsbuildinfo

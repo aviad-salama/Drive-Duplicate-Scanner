@@ -3,9 +3,7 @@ import { getProvider } from '../providers/registry.js';
 import type { CloudFile } from '../providers/types.js';
 import { decrypt } from '../utils/crypto.js';
 import { calculateSha256 } from './fingerprint.service.js';
-import {
-  findDuplicateGroups,
-} from './duplicate.service.js';
+import { findDuplicateGroups } from './duplicate.service.js';
 import { ScanCancelledError, type ScanControl } from './scanControl.service.js';
 import { ScanStatus } from '../types/scan.js';
 import { isSafeFile } from '../utils/fileFilter.js';
@@ -49,6 +47,11 @@ export async function runMultiAccountScan(
   try {
     for (const acc of accounts) {
       const provider = getProvider(acc.provider);
+
+      if (!provider) {
+        throw new Error(`Provider not found: ${acc.provider}`);
+      }
+
       const refreshToken = decrypt(acc.refreshTokenEnc);
 
       for await (const page of provider.listFiles(refreshToken)) {
