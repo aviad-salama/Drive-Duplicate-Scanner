@@ -2,6 +2,14 @@
 
 A full-stack web application designed to help users free up cloud storage space by safely identifying and deleting duplicate files across multiple cloud providers (Google Drive & OneDrive).
 
+### 🌐 Live Demo
+You don't need to run this project locally to try it out. 
+
+You can access the live deployed version here: 
+**[(https://drive-duplicate-scanner.vercel.app/)]**
+
+*(Please review the "Important Note Regarding Google Login" below if you decide to test the live demo with your Google account).*
+
 ## ✨ Key Features
 
 * **Multi-Cloud Scanning:** Connect and scan multiple Google Drive and OneDrive accounts simultaneously.
@@ -38,12 +46,6 @@ When you log in with Google, you may see a red warning screen stating **"Google 
 
 ## 🚀 Getting Started
 
-### 🌐 Live Demo
-You don't need to run this project locally to try it out! 
-You can access the live deployed version here: 
-**[(https://drive-duplicate-scanner.vercel.app/)]**
-
-*(Please review the "Important Note Regarding Google Login" below if you decide to test the live demo with your Google account).*
 ### Prerequisites
 * Node.js 20+
 * PostgreSQL database
