@@ -1,16 +1,36 @@
-# React + Vite
+# Drive Duplicate Scanner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React client and Express API for finding exact duplicate files in Google Drive.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 20 or later
+- PostgreSQL
+- Google OAuth credentials with the Drive API enabled
 
-## React Compiler
+## Server
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```powershell
+cd server
+npm install
+```
 
-## Expanding the ESLint configuration
+Copy `.env.example` to `.env` and fill in the database URL, JWT secret, token encryption key, and Google OAuth credentials. `TOKEN_ENC_KEY` must be 64 hexadecimal characters (32 bytes). The Google OAuth redirect URI must match `GOOGLE_REDIRECT_URI`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```powershell
+npm run generate
+npm run migrate:dev
+npm run dev
+```
+
+## Client
+
+```powershell
+cd client
+npm install
+npm run dev
+```
+
+The client uses `http://localhost:3000` for the API by default. Set `VITE_API_URL` in `client/.env` to use a different URL.
+
+Run `npm run lint` and `npm run build` from `client` to check the client.

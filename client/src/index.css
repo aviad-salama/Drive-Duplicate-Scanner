@@ -1,1 +1,152 @@
 @import "tailwindcss";
+
+@theme {
+  --animate-ping-pong: ping-pong 1.5s ease-in-out infinite;
+  --color-gray-50: #f4faf6;
+  --color-gray-100: #eaf4ed;
+  --color-gray-200: #d7e8dd;
+  --color-gray-300: #bfd6c9;
+  --color-gray-400: #91ac9d;
+  --color-gray-500: #637d6d;
+  --color-gray-600: #496252;
+  --color-gray-700: #354c3e;
+  --color-gray-800: #26392f;
+  --color-gray-900: #18291f;
+  --color-slate-50: #eff8f5;
+  --color-slate-100: #deeee8;
+  --color-slate-200: #c4ddd3;
+  --color-slate-300: #a4c4b8;
+  --color-slate-400: #7fa397;
+  --color-slate-500: #5c7e73;
+  --color-slate-600: #42645c;
+  --color-slate-700: #2d4c47;
+  --color-slate-800: #1c3835;
+  --color-slate-900: #112a28;
+  --color-slate-950: #091d1c;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer components {
+  .form-input {
+    @apply w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 placeholder:text-gray-500 dark:placeholder:text-slate-400 rounded-xl px-4 py-2.5 text-right outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15 transition;
+  }
+
+  .duplicate-group-card {
+    @apply border-teal-200/80 bg-white/80 dark:border-teal-900 dark:bg-slate-900/80;
+  }
+
+  .priority-board {
+    @apply mb-8 border-orange-200 bg-white/90 dark:border-orange-900/50 dark:bg-slate-900/90;
+  }
+
+  .priority-row {
+    @apply flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800;
+  }
+
+  .priority-actions {
+    @apply flex gap-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900;
+  }
+
+  .priority-move-button {
+    @apply rounded-none p-2 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-20;
+  }
+
+  .file-status-badge {
+    @apply absolute -top-3 right-4 z-10 rounded-full px-3 py-1 text-white shadow-sm;
+  }
+
+  .file-status-badge-keep {
+    @apply bg-emerald-500;
+  }
+
+  .file-status-badge-delete {
+    @apply bg-red-500;
+  }
+
+  .file-preview-frame {
+    @apply relative mb-4 flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-slate-700 dark:bg-slate-800;
+  }
+
+  .file-preview-link {
+    @apply absolute inset-0 flex cursor-pointer items-center justify-center bg-black/10 opacity-0 transition-all hover:bg-black/40;
+  }
+
+  .file-preview-frame:hover .file-preview-link {
+    @apply opacity-100;
+  }
+
+  .file-preview-action {
+    @apply rounded-full bg-white/90 p-4 shadow-lg transition-transform;
+  }
+
+  .file-preview-frame:hover .file-preview-action {
+    @apply scale-110;
+  }
+
+  .file-delete-button {
+    @apply mt-auto w-full rounded-lg bg-red-50 text-red-600 shadow-none hover:bg-red-100 hover:text-red-700 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 dark:hover:text-red-300;
+  }
+
+  .scan-cancel-button {
+    @apply bg-red-50 text-red-600 shadow-none hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .dashboard-panel {
+    @apply mb-8 flex flex-col gap-6 bg-white/90 shadow-lg shadow-teal-950/5 backdrop-blur-sm dark:bg-slate-900/90 dark:shadow-black/10 lg:flex-row lg:items-start lg:justify-between;
+  }
+
+  .account-select {
+    @apply rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200;
+  }
+
+  .toast {
+    @apply fixed bottom-6 left-6 z-50 flex items-center gap-2 border-0 bg-emerald-600 px-6 py-3 text-white shadow-2xl transition-all;
+  }
+
+  .theme-toggle {
+    @apply fixed bottom-5 right-5 z-50 h-12 w-12 rounded-full border-teal-200 p-0 text-teal-800 shadow-xl hover:scale-105 active:scale-95 dark:border-teal-800 dark:text-teal-200;
+  }
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+.theme-canvas {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgb(32 190 151 / 20%), transparent 36%),
+    radial-gradient(ellipse at 94% 14%, rgb(255 153 93 / 18%), transparent 32%),
+    radial-gradient(ellipse at 52% 100%, rgb(250 204 21 / 9%), transparent 42%),
+    #f1f8f3;
+}
+
+.dark .theme-canvas {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgb(20 184 166 / 19%), transparent 36%),
+    radial-gradient(ellipse at 94% 14%, rgb(249 115 80 / 14%), transparent 32%),
+    radial-gradient(ellipse at 52% 100%, rgb(202 138 4 / 8%), transparent 42%),
+    #091d1c;
+}
+
+::selection {
+  color: #073b35;
+  background: #9be8d4;
+}
+
+@keyframes ping-pong {
+  0%, 100% {
+    left: 0;
+    transform: translateX(0);
+  }
+  50% {
+    left: 100%;
+    transform: translateX(-100%);
+  }
+}

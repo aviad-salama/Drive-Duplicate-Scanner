@@ -1,21 +1,62 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{js,jsx}'],
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { FlatCompat } from '@eslint/eslintrc';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+export default [
+  { ignores: ['dist', 'eslint.config.js', 'vite.config.js'] },
+  
+  ...compat.config({
     extends: [
-      js.configs.recommended,
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
+      'airbnb',
+      'airbnb-typescript',
+      'airbnb/hooks'
     ],
+    parserOptions: {
+      project: './tsconfig.json',
+      tsconfigRootDir: __dirname,
+    }
+  }),
+
+  {
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       globals: globals.browser,
-      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    plugins: {
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      'react/react-in-jsx-scope': 'off',
+      'import/prefer-default-export': 'off',
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+      'curly': ['error', 'all'],
+      
+      'linebreak-style': 'off',
+      'react/jsx-props-no-spreading': 'off',
+      'react/jsx-one-expression-per-line': 'off',
+      'no-restricted-exports': 'off',
+      'no-alert': 'off',
+      'react/require-default-props': 'off',
+      'no-plusplus': 'off',
+      'no-restricted-syntax': 'off',
+      'no-await-in-loop': 'off',
+      'max-len': 'off',
+      'consistent-return': 'off'
     },
   },
-])
+];
