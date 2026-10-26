@@ -41,7 +41,7 @@ Because this is a portfolio/developer project, the Google OAuth integration is c
 When you log in with Google, you may see a red warning screen stating **"Google hasn't verified this app"**. This is normal for unverified developer apps. 
 **To proceed safely:**
 1. Click on **Advanced** at the bottom of the warning.
-2. Click on **Go to [App Name] (unsafe)**.
+2. Click on **Go to [Drive Duplicate Scanner] (unsafe)**.
 3. Grant the required permissions to allow the app to scan and move files to the trash.
 
 ## 🚀 Getting Started
