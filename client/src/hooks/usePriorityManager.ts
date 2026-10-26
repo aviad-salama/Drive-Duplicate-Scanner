@@ -33,6 +33,14 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
     return keepFile;
   }, [priorityOrder]);
 
+  const keepFiles = useMemo(() => {
+    const result = new Map<DuplicateGroup, CloudFile>();
+    groups.forEach((group) => {
+      result.set(group, getKeepFile(group.files));
+    });
+    return result;
+  }, [groups, getKeepFile]);
+
   const savings = useMemo(() => {
     const calc: Record<string, number> = {};
     accounts.forEach((a) => {
@@ -40,7 +48,7 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
     });
 
     groups.forEach((group) => {
-      const keepFile = getKeepFile(group.files);
+      const keepFile = keepFiles.get(group);
       group.files.forEach((file) => {
         if (file !== keepFile && file.accountId && file.size) {
           calc[file.accountId] = (calc[file.accountId] || 0) + parseInt(file.size, 10);
@@ -48,10 +56,10 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
       });
     });
     return calc;
-  }, [groups, accounts, getKeepFile]);
+  }, [groups, accounts, keepFiles]);
 
   const getFilesToDelete = () => groups.flatMap((group) => {
-    const keepFile = getKeepFile(group.files);
+    const keepFile = keepFiles.get(group);
     return group.files.filter((f) => f !== keepFile);
   });
 
@@ -68,7 +76,7 @@ export function usePriorityManager(accounts: CloudAccount[], groups: DuplicateGr
   return {
     priorityOrder,
     savings,
-    getKeepFile,
+    keepFiles,
     getFilesToDelete,
     movePriority,
   };

@@ -1,18 +1,21 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { getCloudAccountForUser } from '../services/cloudAccount.service.js';
 import { createScan, finishScan, runMultiAccountScan } from '../services/scan.service.js';
 import { getScanControl, registerScan, unregisterScan } from '../services/scanControl.service.js';
 import { ScanAction, ScanEventType, ScanStatus } from '../types/scan.js';
-import {z} from 'zod';
+import { CloudAuthorizationError } from '../utils/errors.js';
 
 const scanErrorSchema = z.object({
   name: z.string().optional(),
+  message: z.string().optional(),
   code: z.union([z.string(), z.number()]).optional(),
   status: z.number().optional(),
   response: z.object({
     data: z.object({
       error: z.string().optional(),
+      error_description: z.string().optional(),
     }).optional(),
   }).optional(),
 });
@@ -23,21 +26,45 @@ function getSafeScanError(error: unknown) {
   }
 
   const result = scanErrorSchema.safeParse(error);
-  
+
   const details = result.success ? result.data : {};
 
   return {
     name: details.name ?? 'UnknownError',
+    message: details.message,
     code: details.code,
     status: details.status,
-    providerError: details.response?.data?.error,
+    providerError: details.response?.data?.error_description
+      ?? details.response?.data?.error,
   };
 }
 
 function getScanFailureMessage(error: unknown, fallback: string) {
-  return getSafeScanError(error).providerError || fallback;
+  const details = getSafeScanError(error);
+  if (details.providerError === 'invalid_grant') {
+    return 'Cloud authorization expired or was revoked. Disconnect and reconnect this account.';
+  }
+  return details.providerError || details.message || fallback;
 }
 
+function sendScanFailure(send: (data: unknown) => void, error: unknown, fallback: string): void {
+  if (error instanceof CloudAuthorizationError) {
+    send({
+      type: ScanEventType.Error,
+      code: error.code,
+      message: error.message,
+      accountId: error.accountId,
+      accountEmail: error.accountEmail,
+      provider: error.provider,
+    });
+    return;
+  }
+
+  send({
+    type: ScanEventType.Error,
+    message: getScanFailureMessage(error, fallback),
+  });
+}
 // Opens an SSE stream and returns a helper that sends one event.
 function openEventStream(res: Response) {
   res.writeHead(200, {
@@ -66,7 +93,7 @@ export async function scanHandler(req: Request, res: Response) {
   const control = registerScan(userId);
   // Stop the work if the browser disconnects (closed tab, reset, etc.).
   res.on('close', () => control.cancel());
-  send({ type: ScanEventType.Started, scanId: control.id });
+  res.on('error', (error) => sendScanFailure(send, error, 'Failed to scan drive'));
 
   const scan = await createScan(userId, account.id);
   try {
@@ -120,13 +147,13 @@ export async function scanAllHandler(req: Request, res: Response) {
 
 // POST /api/cloud/scans/:scanId/:action  (pause | resume | cancel)
 export function controlScanHandler(req: Request, res: Response) {
-  const control = getScanControl(String(req.params['scanId']), req.user!.id);
+  const control = getScanControl(String(req.params.scanId), req.user!.id);
   if (!control) {
     res.status(404).json({ error: 'Scan not found or already finished.' });
     return;
   }
 
-  const action = String(req.params['action']);
+  const action = String(req.params.action);
   if (action === ScanAction.Pause) {
     control.pause();
   } else if (action === ScanAction.Resume) {

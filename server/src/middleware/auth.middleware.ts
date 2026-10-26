@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies?.['session'];
+  const token = req.cookies?.session;
   if (!token) {
     res.status(401).json({ error: 'Not authenticated.' });
     return;

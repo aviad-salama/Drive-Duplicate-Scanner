@@ -3,17 +3,13 @@ import { getProvider } from '../providers/registry.js';
 import type { CloudFile } from '../providers/types.js';
 import { decrypt } from '../utils/crypto.js';
 import { calculateSha256 } from './fingerprint.service.js';
-import {
-  countNativeDuplicateGroups,
-  findDuplicateGroups,
-} from './duplicate.service.js';
+import { findDuplicateGroups } from './duplicate.service.js';
 import { ScanCancelledError, type ScanControl } from './scanControl.service.js';
 import { ScanStatus } from '../types/scan.js';
 import { isSafeFile } from '../utils/fileFilter.js';
 
 export interface ScanProgress {
   scannedCount: number;
-  duplicatesCount: number;
   currentProvider: string;
   currentAccount: string;
 }
@@ -51,6 +47,11 @@ export async function runMultiAccountScan(
   try {
     for (const acc of accounts) {
       const provider = getProvider(acc.provider);
+
+      if (!provider) {
+        throw new Error(`Provider not found: ${acc.provider}`);
+      }
+
       const refreshToken = decrypt(acc.refreshTokenEnc);
 
       for await (const page of provider.listFiles(refreshToken)) {
@@ -70,7 +71,6 @@ export async function runMultiAccountScan(
 
         onProgress({
           scannedCount,
-          duplicatesCount: 0,
           currentProvider: acc.provider,
           currentAccount: acc.accountEmail,
         });
@@ -84,13 +84,10 @@ export async function runMultiAccountScan(
   }
 
   if (cancelled) {
-    const nativeDuplicateCount = countNativeDuplicateGroups(allFiles);
-
     return {
       totalScanned: scannedCount,
       duplicateGroups: [],
       cancelled: true,
-      nativeDuplicateGroups: nativeDuplicateCount,
     };
   }
 
@@ -138,7 +135,6 @@ export async function runMultiAccountScan(
 
   onProgress({
     scannedCount,
-    duplicatesCount: duplicateGroups.length,
     currentProvider: '',
     currentAccount: '',
   });

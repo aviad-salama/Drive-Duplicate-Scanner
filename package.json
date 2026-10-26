@@ -1,0 +1,16 @@
+{
+  "name": "drive-duplicate-scanner",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names server,client --prefix-colors green,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "lint": "concurrently --names server,client --prefix-colors green,cyan \"npm --prefix server run lint\" \"npm --prefix client run lint\"",
+    "lint:fix:server": "npm --prefix server run lint -- --fix",
+    "lint:fix:client": "npm --prefix client run lint -- --fix",
+    "lint:fix": "concurrently --names server,client --prefix-colors green,cyan \"npm run lint:fix:server\" \"npm run lint:fix:client\"",
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "repomix": "npx repomix@latest"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

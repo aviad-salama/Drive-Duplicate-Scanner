@@ -1,8 +1,5 @@
-import js from '@eslint/js';
 import globals from 'globals';
-import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
-
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { FlatCompat } from '@eslint/eslintrc';
@@ -26,6 +23,7 @@ export default [
     parserOptions: {
       project: './tsconfig.json',
       tsconfigRootDir: __dirname,
+      warnOnUnsupportedTypeScriptVersion: false,
     }
   }),
 
@@ -39,11 +37,11 @@ export default [
     },
     rules: {
       'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
       'import/prefer-default-export': 'off',
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      'import/extensions': 'off',
+      'react-refresh/only-export-components': 'off',
+      
       'curly': ['error', 'all'],
       
       'linebreak-style': 'off',

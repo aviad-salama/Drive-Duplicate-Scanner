@@ -16,7 +16,7 @@ import type { CloudFile } from '../../types/cloud';
 import { ScanAllIcon } from '../../components/icons';
 import { Card } from '../../components/ui/Card';
 import { Title, Text } from '../../components/ui/Typography';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui/button';
 import { Alert } from '../../components/ui/Alert';
 import { he } from '../../languages/he';
 
@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const priorityManager = usePriorityManager(accounts, scan.groups);
 
   const activeId = selectedId ?? accounts[0]?.id ?? null;
+  const { cloudAuthIssue, error: scanError } = scan;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -57,7 +58,49 @@ export default function DashboardPage() {
     showToast(he.scan.bulkDeleteSuccess(success, failedMessage));
   };
 
-  const error = scan.error || (params.get('error') ? he.errors.cloudConnection : '');
+  const handleDisconnectCloudIssue = async () => {
+    if (!cloudAuthIssue) {
+      return;
+    }
+
+    try {
+      await disconnect(cloudAuthIssue.accountId);
+
+      if (selectedId === cloudAuthIssue.accountId) {
+        setSelectedId(null);
+      }
+
+      scan.reset();
+      showToast(he.dashboard.disconnectedAccount);
+    } catch {
+      showToast(he.dashboard.disconnectFailed);
+    }
+  };
+  let error = scanError;
+  if (!error && params.get('error')) {
+    error = he.errors.cloudConnection;
+  }
+  if (cloudAuthIssue) {
+    error = he.errors.cloudAuthorization(
+      providerLabel(cloudAuthIssue.provider),
+      cloudAuthIssue.accountEmail,
+    );
+  }
+
+  let disconnectLabel: string = he.dashboard.disconnect;
+  if (isDisconnecting) {
+    disconnectLabel = he.dashboard.disconnecting;
+  }
+
+  let scanAllLabel: string = he.scan.scanAll;
+  if (scan.scanning && scan.mode === 'all') {
+    scanAllLabel = he.scan.scanning;
+  }
+
+  let scanSingleLabel: string = he.scan.start;
+  if (scan.scanning && scan.mode === 'single') {
+    scanSingleLabel = he.scan.scanning;
+  }
 
   return (
     <div className="min-h-screen bg-transparent p-8 text-right" dir="rtl">
@@ -74,7 +117,6 @@ export default function DashboardPage() {
                 paused={scan.paused}
                 cancelled={scan.cancelled}
                 displayScanned={scan.displayScanned}
-                liveDuplicates={scan.liveDuplicates}
                 groupsCount={scan.groups.length}
                 currentAccount={scan.currentAccount}
               />
@@ -108,7 +150,7 @@ export default function DashboardPage() {
                 </select>
                 <Button
                   variant="secondary"
-                  size="md"
+                  size="default"
                   className="font-medium"
                   disabled={scan.scanning || isDisconnecting}
                   onClick={async () => {
@@ -120,7 +162,7 @@ export default function DashboardPage() {
                     scan.reset();
                   }}
                 >
-                  {isDisconnecting ? he.dashboard.disconnecting : he.dashboard.disconnect}
+                  {disconnectLabel}
                 </Button>
               </>
             )}
@@ -133,24 +175,24 @@ export default function DashboardPage() {
 
             {accounts.length >= 2 && (
               <Button
-                variant="warning"
-                size="md"
+                variant="default"
+                size="default"
                 onClick={scan.startScanAll}
                 disabled={scan.scanning}
                 className="bg-orange-500 shadow-md shadow-orange-600/20 hover:bg-orange-600"
               >
                 <ScanAllIcon className="w-5 h-5" />
-                {scan.scanning && scan.mode === 'all' ? he.scan.scanning : he.scan.scanAll}
+                {scanAllLabel}
               </Button>
             )}
 
             <Button
-              variant="primary"
-              size="lg"
+              variant="default"
+              size="default"
               onClick={() => activeId && scan.startScan(activeId)}
               disabled={!activeId || scan.scanning}
             >
-              {scan.scanning && scan.mode === 'single' ? he.scan.scanning : he.scan.start}
+              {scanSingleLabel}
             </Button>
             <Button variant="secondary" onClick={logout}>{he.dashboard.logout}</Button>
           </div>
@@ -158,7 +200,23 @@ export default function DashboardPage() {
 
         {error && (
           <Alert variant="error" className="mb-6 font-medium">
-            {error}
+            <div className="flex flex-col gap-3">
+              <p>{error}</p>
+              {cloudAuthIssue && (
+                <div className="flex flex-wrap gap-2">
+                  <a href={connectUrl(cloudAuthIssue.provider)} className={secondaryLink}>
+                    {he.dashboard.reconnectProvider(providerLabel(cloudAuthIssue.provider))}
+                  </a>
+                  <Button
+                    variant="outline"
+                    disabled={isDisconnecting}
+                    onClick={handleDisconnectCloudIssue}
+                  >
+                    {disconnectLabel}
+                  </Button>
+                </div>
+              )}
+            </div>
           </Alert>
         )}
 
@@ -186,7 +244,10 @@ export default function DashboardPage() {
             />
           )}
           {scan.groups.map((group, i) => {
-            const keepFile = priorityManager.getKeepFile(group.files);
+            const keepFile = priorityManager.keepFiles.get(group);
+            if (!keepFile) {
+              return null;
+            }
             return (
               <DuplicateGroupCard
                 key={`${group.files[0]?.accountId ?? ''}:${group.files[0]?.id ?? i}`}

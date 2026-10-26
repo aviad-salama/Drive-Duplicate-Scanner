@@ -1,6 +1,6 @@
 import type { CloudFile } from '../types/cloud';
 import { he } from '../languages/he';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 
 interface Props {
   file: CloudFile;
@@ -10,8 +10,8 @@ interface Props {
 export default function DeleteFileButton({ file, onDelete }: Props) {
   return (
     <Button
-      variant="danger"
-      size="md"
+      variant="destructive"
+      size="default"
       onClick={() => onDelete(file)}
       className="file-delete-button"
     >

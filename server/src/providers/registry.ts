@@ -11,6 +11,8 @@ const providers: Record<string, CloudProvider> = {
 
 export function getProvider(id: string): CloudProvider {
   const provider = providers[id];
-  if (!provider) throw new AppError(404, `Unknown provider: ${id}`);
+  if (!provider) {
+    throw new AppError(404, `Unknown provider: ${id}`);
+  }
   return provider;
 }

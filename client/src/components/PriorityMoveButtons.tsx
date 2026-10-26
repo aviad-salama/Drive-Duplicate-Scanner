@@ -1,5 +1,5 @@
 import { he } from '../languages/he';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 
 interface Props {
   index: number;
@@ -11,7 +11,7 @@ export default function PriorityMoveButtons({ index, itemCount, movePriority }: 
   return (
     <div className="priority-actions">
       <Button
-        variant="secondary"
+        variant="outline"
         size="sm"
         disabled={index === 0}
         onClick={() => movePriority(index, 'up')}
@@ -21,7 +21,7 @@ export default function PriorityMoveButtons({ index, itemCount, movePriority }: 
         ▲
       </Button>
       <Button
-        variant="secondary"
+        variant="outline"
         size="sm"
         disabled={index === itemCount - 1}
         onClick={() => movePriority(index, 'down')}

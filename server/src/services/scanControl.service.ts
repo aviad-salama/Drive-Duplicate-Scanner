@@ -10,9 +10,13 @@ export class ScanCancelledError extends Error {
 // Holds the pause/cancel state of one running scan; callers must checkpoint between work units.
 export class ScanControl {
   readonly id: string = randomUUID();
+
   readonly userId: string;
+
   private paused = false;
+
   private cancelled = false;
+
   private waiters: Array<() => void> = [];
 
   constructor(userId: string) {

@@ -9,7 +9,7 @@ const app = express();
 
 const allowedOrigins = [
   env.CLIENT_URL,
-  /^https:\/\/drive-duplicate-scanner.*\.vercel\.app$/ 
+  /^https:\/\/drive-duplicate-scanner.*\.vercel\.app$/,
 ];
 
 function isAllowedOrigin(origin: string) {
@@ -30,7 +30,7 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());

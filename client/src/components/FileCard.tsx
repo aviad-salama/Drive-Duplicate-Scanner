@@ -1,7 +1,7 @@
 import type { CloudFile } from '../types/cloud';
 import { formatBytes } from '../utils/format';
 import Breadcrumbs from './Breadcrumbs';
-import { Badge } from './ui/Badge';
+import { Badge } from './ui/badge';
 import { Text } from './ui/Typography';
 import { Card } from './ui/Card';
 import DeleteFileButton from './DeleteFileButton';

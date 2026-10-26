@@ -16,7 +16,7 @@ export async function deleteFileHandler(req: Request, res: Response) {
   }
 
   const { provider, refreshToken } = cloud;
-  await provider.deleteFile(refreshToken, String(req.params['fileId']));
+  await provider.deleteFile(refreshToken, String(req.params.fileId));
   res.json({ success: true });
 }
 
@@ -29,7 +29,7 @@ export async function streamFileHandler(req: Request, res: Response) {
   const { provider, refreshToken } = cloud;
   const { status, headers, stream } = await provider.streamFile(
     refreshToken,
-    String(req.params['fileId']),
+    String(req.params.fileId),
     req.headers.range,
   );
 
@@ -62,7 +62,7 @@ export async function thumbnailHandler(req: Request, res: Response) {
 
   const { provider, refreshToken } = cloud;
   try {
-    const thumb = await provider.getThumbnail(refreshToken, String(req.params['fileId']));
+    const thumb = await provider.getThumbnail(refreshToken, String(req.params.fileId));
     if (thumb) {
       res.setHeader('Content-Type', thumb.contentType);
       res.setHeader('Cache-Control', 'private, max-age=3600');
